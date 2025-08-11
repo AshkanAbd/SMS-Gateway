@@ -1,0 +1,5 @@
+.idea/
+.git/
+.vscode/
+Dockerfile
+docker-compose.yaml
