@@ -1,1 +1,6 @@
+sms_gateway:
+  cost: 100
+  worker_count: 1
+  peek_count: 10
+
 log_level: Debug
