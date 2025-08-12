@@ -6,7 +6,6 @@ import (
 )
 
 type SmsGatewayConfig struct {
-	Cost        int `mapstructure:"cost"`
 	WorkerCount int `mapstructure:"worker_count"`
 	PeekCount   int `mapstructure:"peek_count"`
 }
