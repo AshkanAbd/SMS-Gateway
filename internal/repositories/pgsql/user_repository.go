@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
@@ -15,6 +16,9 @@ func (r *Repository) CreateUser(ctx context.Context, user models.User) (models.U
 
 	res := r.conn.WithContext(ctx).Create(&ue)
 	if res.Error != nil {
+		if strings.Contains(res.Error.Error(), "users_name_check") {
+			return models.User{}, models.EmptyNameError
+		}
 		return models.User{}, res.Error
 	}
 
@@ -39,12 +43,26 @@ func (r *Repository) GetUser(ctx context.Context, id string) (models.User, error
 	return toUser(ue), nil
 }
 
-func (r *Repository) DecreaseUserBalance(ctx context.Context, id string, amount int64) error {
-	//TODO implement me
-	panic("implement me")
-}
+func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount int64) error {
+	res := r.conn.WithContext(ctx).Model(&UserEntity{}).
+		Where("id = ?", id).
+		Updates(
+			map[string]any{
+				"balance":    gorm.Expr("balance + ?", amount),
+				"updated_at": gorm.Expr("now()"),
+			},
+		)
 
-func (r *Repository) IncreaseUserBalance(ctx context.Context, id string, amount int64) error {
-	//TODO implement me
-	panic("implement me")
+	if res.Error != nil {
+		if strings.Contains(res.Error.Error(), "users_balance_check") {
+			return models.NotEnoughBalanceError
+		}
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return models.UserNotExistError
+	}
+
+	return nil
 }

@@ -69,7 +69,7 @@ func TestRepository_CreateUser(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return error if user name is empty", func(t *testing.T) {
+	t.Run("should return empty name error if user name is empty", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -81,7 +81,7 @@ func TestRepository_CreateUser(t *testing.T) {
 		actualUser, actualErr := repo.CreateUser(context.Background(), inputUser)
 
 		assert.Error(t, actualErr)
-		assert.Equal(t, "pq: new row for relation \"users\" violates check constraint \"users_name_check\"", actualErr.Error())
+		assert.Equal(t, models.EmptyNameError, actualErr)
 		assert.Equal(t, "", actualUser.Name)
 		assert.EqualValues(t, 0, actualUser.Balance)
 		assert.Nil(t, actualUser.Entity)
@@ -124,7 +124,7 @@ func TestRepository_GetUser(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return error if user not exists", func(t *testing.T) {
+	t.Run("should return user not found error if user not exists", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -137,6 +137,79 @@ func TestRepository_GetUser(t *testing.T) {
 		assert.Nil(t, actualUser.Entity)
 		assert.Nil(t, actualUser.CreateDate)
 		assert.Nil(t, actualUser.UpdateDate)
+
+		err = cleanDB(conn)
+		assert.Nil(t, err)
+	})
+}
+
+func TestRepository_UpdateUserBalance(t *testing.T) {
+	t.Run("should update user balance", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.Nil(t, err)
+
+		inputUser := models.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		inputAmount := int64(100)
+
+		ctx := context.Background()
+
+		createdUser, err := repo.CreateUser(ctx, inputUser)
+		assert.NoError(t, err)
+
+		beforeUpdateUser, err := repo.GetUser(ctx, createdUser.ID)
+		assert.NoError(t, err)
+
+		actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
+		assert.NoError(t, actualErr)
+
+		afterUpdateUser, err := repo.GetUser(ctx, createdUser.ID)
+		assert.NoError(t, err)
+
+		assert.Equal(t, beforeUpdateUser.ID, afterUpdateUser.ID)
+		assert.Equal(t, beforeUpdateUser.Name, afterUpdateUser.Name)
+		assert.Equal(t, beforeUpdateUser.Balance+inputAmount, afterUpdateUser.Balance)
+		assert.True(t, afterUpdateUser.CreatedAt.Equal(beforeUpdateUser.CreatedAt))
+		assert.True(t, afterUpdateUser.UpdatedAt.After(beforeUpdateUser.UpdatedAt))
+
+		err = cleanDB(conn)
+		assert.Nil(t, err)
+	})
+
+	t.Run("should return user not found error if user not exists", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.Nil(t, err)
+
+		ctx := context.Background()
+
+		actualErr := repo.UpdateUserBalance(ctx, "1", 100)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.UserNotExistError, actualErr)
+
+		err = cleanDB(conn)
+		assert.Nil(t, err)
+	})
+
+	t.Run("should return not enough balance error if balance lt 0", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.Nil(t, err)
+
+		inputUser := models.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		inputAmount := int64(-100)
+
+		ctx := context.Background()
+
+		createdUser, err := repo.CreateUser(ctx, inputUser)
+		assert.NoError(t, err)
+
+		actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.NotEnoughBalanceError, actualErr)
 
 		err = cleanDB(conn)
 		assert.Nil(t, err)

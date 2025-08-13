@@ -3,7 +3,7 @@ sms_gateway:
   peek_count: 10
 
 pgsql:
-  dsn: "host=localhost user=postgres password=12345678 dbname=sms_gateway_test port=5432 sslmode=disable TimeZone=Asia/Tehran"
+  dsn: "host=localhost user=postgres password=12345678 dbname=sms_gateway port=5432 sslmode=disable TimeZone=Asia/Tehran"
   migrations_path: "file://migrations/pgsql"
 
 log_level: Debug

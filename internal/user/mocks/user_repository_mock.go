@@ -104,69 +104,6 @@ func (_c *MockIUserRepository_CreateUser_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
-// DecreaseUserBalance provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) DecreaseUserBalance(ctx context.Context, id string, amount int64) error {
-	ret := _mock.Called(ctx, id, amount)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DecreaseUserBalance")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
-		r0 = returnFunc(ctx, id, amount)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockIUserRepository_DecreaseUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DecreaseUserBalance'
-type MockIUserRepository_DecreaseUserBalance_Call struct {
-	*mock.Call
-}
-
-// DecreaseUserBalance is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - amount int64
-func (_e *MockIUserRepository_Expecter) DecreaseUserBalance(ctx interface{}, id interface{}, amount interface{}) *MockIUserRepository_DecreaseUserBalance_Call {
-	return &MockIUserRepository_DecreaseUserBalance_Call{Call: _e.mock.On("DecreaseUserBalance", ctx, id, amount)}
-}
-
-func (_c *MockIUserRepository_DecreaseUserBalance_Call) Run(run func(ctx context.Context, id string, amount int64)) *MockIUserRepository_DecreaseUserBalance_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 int64
-		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockIUserRepository_DecreaseUserBalance_Call) Return(err error) *MockIUserRepository_DecreaseUserBalance_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockIUserRepository_DecreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, id string, amount int64) error) *MockIUserRepository_DecreaseUserBalance_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetUser provides a mock function for the type MockIUserRepository
 func (_mock *MockIUserRepository) GetUser(ctx context.Context, id string) (models.User, error) {
 	ret := _mock.Called(ctx, id)
@@ -233,12 +170,12 @@ func (_c *MockIUserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// IncreaseUserBalance provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) IncreaseUserBalance(ctx context.Context, id string, amount int64) error {
+// UpdateUserBalance provides a mock function for the type MockIUserRepository
+func (_mock *MockIUserRepository) UpdateUserBalance(ctx context.Context, id string, amount int64) error {
 	ret := _mock.Called(ctx, id, amount)
 
 	if len(ret) == 0 {
-		panic("no return value specified for IncreaseUserBalance")
+		panic("no return value specified for UpdateUserBalance")
 	}
 
 	var r0 error
@@ -250,20 +187,20 @@ func (_mock *MockIUserRepository) IncreaseUserBalance(ctx context.Context, id st
 	return r0
 }
 
-// MockIUserRepository_IncreaseUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncreaseUserBalance'
-type MockIUserRepository_IncreaseUserBalance_Call struct {
+// MockIUserRepository_UpdateUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUserBalance'
+type MockIUserRepository_UpdateUserBalance_Call struct {
 	*mock.Call
 }
 
-// IncreaseUserBalance is a helper method to define mock.On call
+// UpdateUserBalance is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - amount int64
-func (_e *MockIUserRepository_Expecter) IncreaseUserBalance(ctx interface{}, id interface{}, amount interface{}) *MockIUserRepository_IncreaseUserBalance_Call {
-	return &MockIUserRepository_IncreaseUserBalance_Call{Call: _e.mock.On("IncreaseUserBalance", ctx, id, amount)}
+func (_e *MockIUserRepository_Expecter) UpdateUserBalance(ctx interface{}, id interface{}, amount interface{}) *MockIUserRepository_UpdateUserBalance_Call {
+	return &MockIUserRepository_UpdateUserBalance_Call{Call: _e.mock.On("UpdateUserBalance", ctx, id, amount)}
 }
 
-func (_c *MockIUserRepository_IncreaseUserBalance_Call) Run(run func(ctx context.Context, id string, amount int64)) *MockIUserRepository_IncreaseUserBalance_Call {
+func (_c *MockIUserRepository_UpdateUserBalance_Call) Run(run func(ctx context.Context, id string, amount int64)) *MockIUserRepository_UpdateUserBalance_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -286,12 +223,12 @@ func (_c *MockIUserRepository_IncreaseUserBalance_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockIUserRepository_IncreaseUserBalance_Call) Return(err error) *MockIUserRepository_IncreaseUserBalance_Call {
+func (_c *MockIUserRepository_UpdateUserBalance_Call) Return(err error) *MockIUserRepository_UpdateUserBalance_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockIUserRepository_IncreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, id string, amount int64) error) *MockIUserRepository_IncreaseUserBalance_Call {
+func (_c *MockIUserRepository_UpdateUserBalance_Call) RunAndReturn(run func(ctx context.Context, id string, amount int64) error) *MockIUserRepository_UpdateUserBalance_Call {
 	_c.Call.Return(run)
 	return _c
 }

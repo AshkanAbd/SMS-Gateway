@@ -36,3 +36,14 @@ func (u *UserService) GetUser(ctx context.Context, id string) (models.User, erro
 
 	return res, nil
 }
+
+func (u *UserService) UpdateUserBalance(ctx context.Context, userId string, change int64) error {
+	if change == 0 {
+		return nil
+	}
+	if err := u.userRepo.UpdateUserBalance(ctx, userId, change); err != nil {
+		return err
+	}
+
+	return nil
+}
