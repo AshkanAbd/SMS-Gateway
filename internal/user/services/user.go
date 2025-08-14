@@ -37,11 +37,28 @@ func (u *UserService) GetUser(ctx context.Context, id string) (models.User, erro
 	return res, nil
 }
 
-func (u *UserService) UpdateUserBalance(ctx context.Context, userId string, change int64) error {
-	if change == 0 {
+func (u *UserService) IncreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+	if amount == 0 {
 		return nil
 	}
-	if err := u.userRepo.UpdateUserBalance(ctx, userId, change); err != nil {
+	if amount < 0 {
+		return models.InvalidBalanceError
+	}
+	if err := u.userRepo.UpdateUserBalance(ctx, userId, amount); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserService) DecreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+	if amount == 0 {
+		return nil
+	}
+	if amount < 0 {
+		return models.InvalidBalanceError
+	}
+	if err := u.userRepo.UpdateUserBalance(ctx, userId, amount); err != nil {
 		return err
 	}
 

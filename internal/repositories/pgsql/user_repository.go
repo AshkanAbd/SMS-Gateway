@@ -55,7 +55,7 @@ func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount in
 
 	if res.Error != nil {
 		if strings.Contains(res.Error.Error(), "users_balance_check") {
-			return models.NotEnoughBalanceError
+			return models.InsufficientBalanceError
 		}
 		return res.Error
 	}

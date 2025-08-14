@@ -192,7 +192,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return not enough balance error if balance lt 0", func(t *testing.T) {
+	t.Run("should return insufficient balance error if balance lt 0", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -209,7 +209,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 
 		actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
 		assert.Error(t, actualErr)
-		assert.Equal(t, models.NotEnoughBalanceError, actualErr)
+		assert.Equal(t, models.InsufficientBalanceError, actualErr)
 
 		err = cleanDB(conn)
 		assert.Nil(t, err)

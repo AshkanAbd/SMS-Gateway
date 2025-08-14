@@ -118,10 +118,10 @@ func TestUserService_GetUser(t *testing.T) {
 	})
 }
 
-func TestUserService_UpdateUserBalance(t *testing.T) {
+func TestUserService_IncreaseUserBalance(t *testing.T) {
 	inputID := "1"
 
-	t.Run("should update user balance when user exists", func(t *testing.T) {
+	t.Run("should update user", func(t *testing.T) {
 		inputAmount := int64(100)
 		ctx := context.Background()
 		mockRepo := mocks.NewMockIUserRepository(t)
@@ -132,18 +132,18 @@ func TestUserService_UpdateUserBalance(t *testing.T) {
 			Once()
 
 		service := services.NewUserService(mockRepo)
-		actualErr := service.UpdateUserBalance(ctx, inputID, inputAmount)
+		actualErr := service.IncreaseUserBalance(ctx, inputID, inputAmount)
 
 		assert.NoError(t, actualErr)
 	})
 
-	t.Run("should do nothing when change eq 0", func(t *testing.T) {
+	t.Run("should do nothing when amount eq 0", func(t *testing.T) {
 		inputAmount := int64(0)
 		ctx := context.Background()
 		mockRepo := mocks.NewMockIUserRepository(t)
 
 		service := services.NewUserService(mockRepo)
-		actualErr := service.UpdateUserBalance(ctx, inputID, inputAmount)
+		actualErr := service.IncreaseUserBalance(ctx, inputID, inputAmount)
 
 		assert.NoError(t, actualErr)
 	})
@@ -159,26 +159,98 @@ func TestUserService_UpdateUserBalance(t *testing.T) {
 			Once()
 
 		service := services.NewUserService(mockRepo)
-		actualErr := service.UpdateUserBalance(ctx, inputID, inputAmount)
+		actualErr := service.IncreaseUserBalance(ctx, inputID, inputAmount)
 
 		assert.Error(t, actualErr)
 		assert.Equal(t, models.UserNotExistError, actualErr)
 	})
 
-	t.Run("should return error when user exists but final balance lt 0", func(t *testing.T) {
+	t.Run("should return error when user exists but amount lt 0", func(t *testing.T) {
 		inputAmount := int64(-100)
+		ctx := context.Background()
+		mockRepo := mocks.NewMockIUserRepository(t)
+
+		service := services.NewUserService(mockRepo)
+		actualErr := service.IncreaseUserBalance(ctx, inputID, inputAmount)
+
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.InvalidBalanceError, actualErr)
+	})
+}
+
+func TestUserService_DecreaseUserBalance(t *testing.T) {
+	inputID := "1"
+
+	t.Run("should update user", func(t *testing.T) {
+		inputAmount := int64(100)
 		ctx := context.Background()
 		mockRepo := mocks.NewMockIUserRepository(t)
 
 		mockRepo.EXPECT().
 			UpdateUserBalance(ctx, inputID, inputAmount).
-			Return(models.NotEnoughBalanceError).
+			Return(nil).
 			Once()
 
 		service := services.NewUserService(mockRepo)
-		actualErr := service.UpdateUserBalance(ctx, inputID, inputAmount)
+		actualErr := service.DecreaseUserBalance(ctx, inputID, inputAmount)
+
+		assert.NoError(t, actualErr)
+	})
+
+	t.Run("should do nothing when amount eq 0", func(t *testing.T) {
+		inputAmount := int64(0)
+		ctx := context.Background()
+		mockRepo := mocks.NewMockIUserRepository(t)
+
+		service := services.NewUserService(mockRepo)
+		actualErr := service.DecreaseUserBalance(ctx, inputID, inputAmount)
+
+		assert.NoError(t, actualErr)
+	})
+
+	t.Run("should return error when user not exists", func(t *testing.T) {
+		inputAmount := int64(100)
+		ctx := context.Background()
+		mockRepo := mocks.NewMockIUserRepository(t)
+
+		mockRepo.EXPECT().
+			UpdateUserBalance(ctx, inputID, inputAmount).
+			Return(models.UserNotExistError).
+			Once()
+
+		service := services.NewUserService(mockRepo)
+		actualErr := service.DecreaseUserBalance(ctx, inputID, inputAmount)
 
 		assert.Error(t, actualErr)
-		assert.Equal(t, models.NotEnoughBalanceError, actualErr)
+		assert.Equal(t, models.UserNotExistError, actualErr)
+	})
+
+	t.Run("should return error when user exists but amount lt 0", func(t *testing.T) {
+		inputAmount := int64(-100)
+		ctx := context.Background()
+		mockRepo := mocks.NewMockIUserRepository(t)
+
+		service := services.NewUserService(mockRepo)
+		actualErr := service.DecreaseUserBalance(ctx, inputID, inputAmount)
+
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.InvalidBalanceError, actualErr)
+	})
+
+	t.Run("should return error when user exists but final balance lt 0", func(t *testing.T) {
+		inputAmount := int64(100)
+		ctx := context.Background()
+		mockRepo := mocks.NewMockIUserRepository(t)
+
+		mockRepo.EXPECT().
+			UpdateUserBalance(ctx, inputID, inputAmount).
+			Return(models.InsufficientBalanceError).
+			Once()
+
+		service := services.NewUserService(mockRepo)
+		actualErr := service.DecreaseUserBalance(ctx, inputID, inputAmount)
+
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.InsufficientBalanceError, actualErr)
 	})
 }
