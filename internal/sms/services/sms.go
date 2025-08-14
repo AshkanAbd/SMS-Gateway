@@ -2,14 +2,14 @@ package services
 
 import (
 	"context"
+	"time"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/repositories"
 )
 
 type SmsServiceConfig struct {
-	WorkerCount int `mapstructure:"worker_count"`
-	PeekCount   int `mapstructure:"peek_count"`
+	EnqueueInterval time.Duration `mapstructure:"enqueue_interval"`
 }
 
 type SmsService struct {
@@ -53,4 +53,17 @@ func (s *SmsService) GetUserSms(ctx context.Context, userId string) ([]models.Sm
 	}
 
 	return msgs, nil
+}
+
+func (s *SmsService) EnqueueEarliest(ctx context.Context, count int) (int, error) {
+	enqueuedCount := 0
+	for range count {
+		newEnqueued, err := s.smsRepo.EnqueueEarliestMessage(ctx)
+		if err != nil {
+			return 0, err
+		}
+		enqueuedCount += newEnqueued
+	}
+
+	return enqueuedCount, nil
 }

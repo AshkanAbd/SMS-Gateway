@@ -1,6 +1,7 @@
 package pgsql
 
 import (
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/repositories"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -8,10 +9,14 @@ import (
 )
 
 type Repository struct {
-	conn *gorm.DB
+	conn     *gorm.DB
+	smsQueue repositories.ISmsQueue
 }
 
-func NewRepository(pgsqlConn *pkgPgSql.Connector) (*Repository, error) {
+func NewRepository(
+	pgsqlConn *pkgPgSql.Connector,
+	smsQueue repositories.ISmsQueue,
+) (*Repository, error) {
 	cfg := &gorm.Config{}
 
 	conn, err := gorm.Open(postgres.New(postgres.Config{
@@ -22,6 +27,7 @@ func NewRepository(pgsqlConn *pkgPgSql.Connector) (*Repository, error) {
 	}
 
 	return &Repository{
-		conn: conn,
+		conn:     conn,
+		smsQueue: smsQueue,
 	}, nil
 }

@@ -6,13 +6,15 @@ import (
 	"testing"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/repositories/pgsql"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/mocks"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/repositories"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
 	"github.com/stretchr/testify/assert"
 
 	pkgPgSql "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/pgsql"
 )
 
-func initDB() (*pkgPgSql.Connector, *pgsql.Repository, error) {
+func initDB(smsQueue repositories.ISmsQueue) (*pkgPgSql.Connector, *pgsql.Repository, error) {
 	cfg := pkgPgSql.Config{
 		DSN:            os.Getenv("PGSQL_DSN"),
 		MigrationsPath: "file://../../../migrations/pgsql",
@@ -27,7 +29,7 @@ func initDB() (*pkgPgSql.Connector, *pgsql.Repository, error) {
 		return nil, nil, err
 	}
 
-	repo, err := pgsql.NewRepository(conn)
+	repo, err := pgsql.NewRepository(conn, smsQueue)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -49,7 +51,7 @@ func cleanDB(conn *pkgPgSql.Connector) error {
 
 func TestRepository_CreateUser(t *testing.T) {
 	t.Run("should create user", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		inputUser := models.User{
@@ -70,7 +72,7 @@ func TestRepository_CreateUser(t *testing.T) {
 	})
 
 	t.Run("should return EmptyNameError if user name is empty", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		inputUser := models.User{
@@ -95,7 +97,7 @@ func TestRepository_CreateUser(t *testing.T) {
 
 func TestRepository_GetUser(t *testing.T) {
 	t.Run("should return user", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		inputUser := models.User{
@@ -125,7 +127,7 @@ func TestRepository_GetUser(t *testing.T) {
 	})
 
 	t.Run("should return UserNotExistError if user not exists", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		actualUser, actualErr := repo.GetUser(context.Background(), "1")
@@ -145,7 +147,7 @@ func TestRepository_GetUser(t *testing.T) {
 
 func TestRepository_UpdateUserBalance(t *testing.T) {
 	t.Run("should update user balance", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		inputUser := models.User{
@@ -179,7 +181,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 	})
 
 	t.Run("should return UserNotExistError if user not exists", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		ctx := context.Background()
@@ -193,7 +195,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 	})
 
 	t.Run("should return InsufficientBalanceError if balance lt 0", func(t *testing.T) {
-		conn, repo, err := initDB()
+		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
 		assert.Nil(t, err)
 
 		inputUser := models.User{

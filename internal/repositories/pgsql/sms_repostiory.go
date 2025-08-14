@@ -3,9 +3,11 @@ package pgsql
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (r *Repository) CreateScheduleMessages(ctx context.Context, msgs []models.Sms) error {
@@ -41,7 +43,7 @@ func (r *Repository) GetMessagesByUserId(ctx context.Context, userId string) ([]
 
 	err := r.conn.WithContext(ctx).
 		Where("user_id = ?", userId).
-		Order("created_at DESC").
+		Order("created_at DESC, id DESC").
 		Find(&ses).Error
 	if err != nil {
 		return nil, err
@@ -55,12 +57,48 @@ func (r *Repository) GetMessagesByUserId(ctx context.Context, userId string) ([]
 	return ss, nil
 }
 
-func (r *Repository) SetFailed(ctx context.Context, ids []int) error {
-	//TODO implement me
-	panic("implement me")
-}
+func (r *Repository) EnqueueEarliestMessage(ctx context.Context) (int, error) {
+	rowsAffected := 0
+	err := r.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var ses []smsEntity
 
-func (r *Repository) SetSent(ctx context.Context, ids []int) error {
-	//TODO implement me
-	panic("implement me")
+		res := tx.WithContext(ctx).
+			Model(&ses).
+			Where("id IN (?)",
+				tx.WithContext(ctx).
+					Model(&smsEntity{}).
+					Select("id").
+					Where("status", models.StatusScheduled).
+					Order("created_at ASC, id ASC").
+					Limit(1).
+					Clauses(clause.Locking{
+						Strength: "UPDATE",
+						Options:  "SKIP LOCKED",
+					}),
+			).Clauses(clause.Returning{}).
+			Updates(map[string]any{
+				"status":     models.StatusEnqueued,
+				"updated_at": time.Now(),
+			})
+
+		if res.Error != nil {
+			return res.Error
+		}
+		rowsAffected = int(res.RowsAffected)
+
+		if res.RowsAffected == 0 {
+			return nil
+		}
+
+		if err := r.smsQueue.Enqueue(ctx, toMessage(ses[0])); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
 }

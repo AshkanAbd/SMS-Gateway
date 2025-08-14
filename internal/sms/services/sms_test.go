@@ -230,3 +230,77 @@ func TestSmsService_GetUserMessages(t *testing.T) {
 		assert.Nil(t, actualMsgs)
 	})
 }
+
+func TestSmsService_EnqueueEarliest(t *testing.T) {
+	cfg := services.SmsServiceConfig{}
+
+	t.Run("should return enqueue count", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		expectedCount := 4
+
+		mockRepo.EXPECT().
+			EnqueueEarliestMessage(ctx).
+			Return(1, nil).
+			Times(expectedCount)
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 4)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, expectedCount, actualCount)
+	})
+
+	t.Run("should return lt count when not enough message available", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		expectedCount := 3
+
+		mockRepo.EXPECT().
+			EnqueueEarliestMessage(ctx).
+			Return(1, nil).
+			Times(3)
+		mockRepo.EXPECT().
+			EnqueueEarliestMessage(ctx).
+			Return(0, nil).
+			Once()
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 4)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, expectedCount, actualCount)
+	})
+
+	t.Run("should return error and stop executing when an error occurred", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		mockRepo.EXPECT().
+			EnqueueEarliestMessage(ctx).
+			Return(1, nil).
+			Times(2)
+		mockRepo.EXPECT().
+			EnqueueEarliestMessage(ctx).
+			Return(0, fmt.Errorf("error")).
+			Once()
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 10)
+		assert.Error(t, actualErr)
+		assert.Equal(t, "error", actualErr.Error())
+		assert.Equal(t, 0, actualCount)
+	})
+}

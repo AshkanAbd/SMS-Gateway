@@ -9,6 +9,5 @@ import (
 type ISmsRepository interface {
 	CreateScheduleMessages(ctx context.Context, msgs []models.Sms) error
 	GetMessagesByUserId(ctx context.Context, userId string) ([]models.Sms, error)
-	SetFailed(ctx context.Context, ids []int) error
-	SetSent(ctx context.Context, ids []int) error
+	EnqueueEarliestMessage(ctx context.Context) (int, error)
 }
