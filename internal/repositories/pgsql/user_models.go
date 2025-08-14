@@ -10,7 +10,7 @@ import (
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
 )
 
-type UserEntity struct {
+type userEntity struct {
 	ID        uint
 	Name      string
 	Balance   int64
@@ -18,18 +18,18 @@ type UserEntity struct {
 	UpdatedAt time.Time
 }
 
-func (u *UserEntity) TableName() string {
+func (u *userEntity) TableName() string {
 	return "users"
 }
 
-func fromUser(u models.User) UserEntity {
-	ue := UserEntity{
+func fromUser(u models.User) userEntity {
+	ue := userEntity{
 		Name:    strings.Trim(u.Name, " "),
 		Balance: u.Balance,
 	}
 
 	if u.Entity != nil {
-		ue.ID = uint(common.AtoiWithFallback(u.ID, 0))
+		ue.ID = common.ParseUIntWithFallback(u.ID, 0)
 	}
 	if u.CreateDate != nil {
 		ue.CreatedAt = u.CreatedAt
@@ -41,7 +41,7 @@ func fromUser(u models.User) UserEntity {
 	return ue
 }
 
-func toUser(ue UserEntity) models.User {
+func toUser(ue userEntity) models.User {
 	return models.User{
 		Entity: &shared.Entity{
 			ID: fmt.Sprintf("%d", ue.ID),

@@ -7,5 +7,5 @@ import (
 )
 
 type ISmsSender interface {
-	Send(ctx context.Context, msg models.Message) error
+	Send(ctx context.Context, msg models.Sms) error
 }

@@ -6,7 +6,7 @@ import (
 )
 
 type AppConfig struct {
-	SmsGatewayConfig services.SmsGatewayConfig `mapstructure:"sms_gateway"`
+	SmsServiceConfig services.SmsServiceConfig `mapstructure:"sms_service"`
 	PgSQLConfig      pkgPgSql.Config           `mapstructure:"pgsql"`
 	LogLevel         string                    `mapstructure:"log_level"`
 }

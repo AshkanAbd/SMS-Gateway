@@ -69,7 +69,7 @@ func TestRepository_CreateUser(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return empty name error if user name is empty", func(t *testing.T) {
+	t.Run("should return EmptyNameError if user name is empty", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -124,7 +124,7 @@ func TestRepository_GetUser(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return user not found error if user not exists", func(t *testing.T) {
+	t.Run("should return UserNotExistError if user not exists", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -178,7 +178,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return user not found error if user not exists", func(t *testing.T) {
+	t.Run("should return UserNotExistError if user not exists", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 
@@ -192,7 +192,7 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
-	t.Run("should return insufficient balance error if balance lt 0", func(t *testing.T) {
+	t.Run("should return InsufficientBalanceError if balance lt 0", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.Nil(t, err)
 

@@ -1,4 +1,4 @@
-sms_gateway:
+sms_service:
   worker_count: 1
   peek_count: 10
 

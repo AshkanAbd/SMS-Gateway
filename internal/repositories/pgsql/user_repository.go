@@ -16,7 +16,7 @@ func (r *Repository) CreateUser(ctx context.Context, user models.User) (models.U
 
 	res := r.conn.WithContext(ctx).Create(&ue)
 	if res.Error != nil {
-		if strings.Contains(res.Error.Error(), "users_name_check") {
+		if strings.Contains(res.Error.Error(), "user_name_empty") {
 			return models.User{}, models.EmptyNameError
 		}
 		return models.User{}, res.Error
@@ -29,7 +29,7 @@ func (r *Repository) CreateUser(ctx context.Context, user models.User) (models.U
 }
 
 func (r *Repository) GetUser(ctx context.Context, id string) (models.User, error) {
-	ue := UserEntity{}
+	ue := userEntity{}
 
 	err := r.conn.WithContext(ctx).First(&ue, "id = ?", id).Error
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *Repository) GetUser(ctx context.Context, id string) (models.User, error
 }
 
 func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount int64) error {
-	res := r.conn.WithContext(ctx).Model(&UserEntity{}).
+	res := r.conn.WithContext(ctx).Model(&userEntity{}).
 		Where("id = ?", id).
 		Updates(
 			map[string]any{
@@ -54,7 +54,7 @@ func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount in
 		)
 
 	if res.Error != nil {
-		if strings.Contains(res.Error.Error(), "users_balance_check") {
+		if strings.Contains(res.Error.Error(), "user_insufficient_balance") {
 			return models.InsufficientBalanceError
 		}
 		return res.Error

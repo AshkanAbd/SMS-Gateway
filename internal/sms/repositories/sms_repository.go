@@ -7,8 +7,8 @@ import (
 )
 
 type ISmsRepository interface {
-	Enqueue(ctx context.Context, msgs []models.Message) error
-	Peek(ctx context.Context, count int) ([]models.Message, error)
+	CreateScheduleMessages(ctx context.Context, msgs []models.Sms) error
+	GetMessagesByUserId(ctx context.Context, userId string) ([]models.Sms, error)
 	SetFailed(ctx context.Context, ids []int) error
 	SetSent(ctx context.Context, ids []int) error
 }

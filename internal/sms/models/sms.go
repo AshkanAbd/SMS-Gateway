@@ -1,16 +1,21 @@
 package models
 
+import "github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
+
 type SmsStatus int
 
 const (
-	Enqueued SmsStatus = iota
-	Sending
-	Sent
-	Failed
+	StatusScheduled SmsStatus = iota
+	StatusEnqueued
+	StatusSent
+	StatusFailed
 )
 
-type Message struct {
-	ID       string
+type Sms struct {
+	*shared.Entity
+	*shared.CreateDate
+	*shared.UpdateDate
+
 	UserId   string
 	Content  string
 	Receiver string
