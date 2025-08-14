@@ -17,7 +17,7 @@ import (
 func TestRepository_CreateScheduleMessages(t *testing.T) {
 	t.Run("should create messages", func(t *testing.T) {
 		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		ctx := context.Background()
 
@@ -55,12 +55,12 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 		assert.Equal(t, len(inputMsgs), count)
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("should return EmptyContentError when content is empty and not create any messages", func(t *testing.T) {
 		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		ctx := context.Background()
 
@@ -99,12 +99,12 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 		assert.Equal(t, 0, count)
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("should return EmptyReceiverError when receiver is empty and not create any messages", func(t *testing.T) {
 		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		ctx := context.Background()
 
@@ -143,14 +143,14 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 		assert.Equal(t, 0, count)
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 }
 
 func TestRepository_GetMessagesByUserId(t *testing.T) {
 	t.Run("should return user messages", func(t *testing.T) {
 		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		ctx := context.Background()
 
@@ -201,7 +201,7 @@ func TestRepository_GetMessagesByUserId(t *testing.T) {
 		}
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 }
 
@@ -212,7 +212,7 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		mockQueue := mocks.NewMockISmsQueue(t)
 
 		conn, repo, err := initDB(mockQueue)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		tmpUser := umodels.User{
 			Name:    "AshkanAbd",
@@ -262,7 +262,7 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		assert.Equal(t, models.StatusEnqueued, actualMsgs[1].Status)
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("should return 0 when no message to enqueue", func(t *testing.T) {
@@ -271,14 +271,14 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		mockQueue := mocks.NewMockISmsQueue(t)
 
 		conn, repo, err := initDB(mockQueue)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		actualUpdated, actualErr := repo.EnqueueEarliestMessage(ctx)
 		assert.NoError(t, actualErr)
 		assert.Equal(t, 0, actualUpdated)
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("should return error and rollback when can not enqueue", func(t *testing.T) {
@@ -287,7 +287,7 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		mockQueue := mocks.NewMockISmsQueue(t)
 
 		conn, repo, err := initDB(mockQueue)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 
 		tmpUser := umodels.User{
 			Name:    "AshkanAbd",
@@ -343,6 +343,6 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		}
 
 		err = cleanDB(conn)
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	})
 }
