@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/repositories/redis"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
 	"github.com/stretchr/testify/assert"
 
 	pkgRedis "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/redis"

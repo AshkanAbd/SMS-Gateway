@@ -5,10 +5,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/stretchr/testify/assert"
 
-	umodels "github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
+	umodels "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
 )
 
 func TestRepository_CreateScheduleMessages(t *testing.T) {

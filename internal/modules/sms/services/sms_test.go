@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/mocks"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/mocks"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/services"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -232,7 +232,9 @@ func TestSmsService_GetUserMessages(t *testing.T) {
 }
 
 func TestSmsService_EnqueueEarliest(t *testing.T) {
-	cfg := services.SmsServiceConfig{}
+	cfg := services.SmsServiceConfig{
+		QueueCapacity: 100,
+	}
 
 	t.Run("should return enqueue count", func(t *testing.T) {
 		ctx := context.Background()
@@ -293,6 +295,11 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 			Return(nil).
 			Once()
 
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(10, nil).
+			Once()
+
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
 		actualCount, actualErr := service.EnqueueEarliest(ctx, len(msgs))
@@ -343,6 +350,11 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 			Return(nil).
 			Once()
 
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(10, nil).
+			Once()
+
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
 		actualCount, actualErr := service.EnqueueEarliest(ctx, countInput)
@@ -362,6 +374,11 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 		mockRepo.EXPECT().
 			EnqueueMessages(ctx, countInput).
 			Return(nil, fmt.Errorf("db error")).
+			Once()
+
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(10, nil).
 			Once()
 
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
@@ -423,6 +440,11 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 			Return(nil).
 			Once()
 
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(10, nil).
+			Once()
+
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
 		actualCount, actualErr := service.EnqueueEarliest(ctx, countInput)
@@ -482,11 +504,56 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 			Return(fmt.Errorf("db error")).
 			Once()
 
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(10, nil).
+			Once()
+
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
 		actualCount, actualErr := service.EnqueueEarliest(ctx, countInput)
 		assert.Error(t, actualErr)
 		assert.Equal(t, "db error", actualErr.Error())
+		assert.Equal(t, 0, actualCount)
+	})
+
+	t.Run("should return InvalidQueueError when queue is not valid", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(0, models.InvalidQueueError).
+			Once()
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 1)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.InvalidQueueError, actualErr)
+		assert.Equal(t, 0, actualCount)
+	})
+
+	t.Run("should return NoCapacityInQueueError when queue is full", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(100, nil).
+			Once()
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 1)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.NoCapacityInQueueError, actualErr)
 		assert.Equal(t, 0, actualCount)
 	})
 }

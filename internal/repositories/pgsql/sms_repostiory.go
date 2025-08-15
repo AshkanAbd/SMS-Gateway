@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

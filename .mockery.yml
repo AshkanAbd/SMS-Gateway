@@ -12,13 +12,13 @@ require-template-schema-exists: true
 template: testify
 template-schema: '{{.Template}}.schema.json'
 packages:
-  github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/repositories:
+  github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/repositories:
     config:
       all: true
       pkgname: "mocks"
       dir: '{{.InterfaceDirRelative}}/../mocks'
 
-  github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/repositories:
+  github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/repositories:
     config:
       all: true
       pkgname: "mocks"

@@ -1,8 +1,8 @@
 package config
 
 import (
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/repositories/redis"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/services"
 
 	pkgPgSql "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/pgsql"
 	pkgRedis "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/redis"

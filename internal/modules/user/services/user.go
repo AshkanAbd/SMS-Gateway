@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/repositories"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/repositories"
 )
 
 type UserService struct {

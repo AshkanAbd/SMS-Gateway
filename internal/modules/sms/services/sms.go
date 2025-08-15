@@ -2,14 +2,13 @@ package services
 
 import (
 	"context"
-	"time"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/repositories"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/repositories"
 )
 
 type SmsServiceConfig struct {
-	EnqueueInterval time.Duration `mapstructure:"enqueue_interval"`
+	QueueCapacity int `mapstructure:"queue_capacity"`
 }
 
 type SmsService struct {
@@ -56,6 +55,14 @@ func (s *SmsService) GetUserSms(ctx context.Context, userId string) ([]models.Sm
 }
 
 func (s *SmsService) EnqueueEarliest(ctx context.Context, count int) (int, error) {
+	queueLen, err := s.smsQueue.GetLength(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if queueLen+count > s.cfg.QueueCapacity {
+		return 0, models.NoCapacityInQueueError
+	}
+
 	enqueuedMsgs, err := s.smsRepo.EnqueueMessages(ctx, count)
 	if err != nil {
 		return 0, err

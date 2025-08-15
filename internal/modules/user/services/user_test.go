@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/mocks"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/services"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/mocks"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/services"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	mock "github.com/stretchr/testify/mock"
 )
 

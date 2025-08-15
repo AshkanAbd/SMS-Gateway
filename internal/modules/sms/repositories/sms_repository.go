@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 )
 
 type ISmsRepository interface {

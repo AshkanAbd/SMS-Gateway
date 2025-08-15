@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/repositories/pgsql"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
 	"github.com/stretchr/testify/assert"
 
 	pkgPgSql "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/pgsql"

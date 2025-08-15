@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/redis/go-redis/v9"
 )
 

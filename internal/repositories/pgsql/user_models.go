@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
 )
 
 type userEntity struct {
