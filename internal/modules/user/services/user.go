@@ -7,6 +7,13 @@ import (
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/repositories"
 )
 
+type IUserService interface {
+	CreateUser(ctx context.Context, user models.User) (models.User, error)
+	GetUser(ctx context.Context, id string) (models.User, error)
+	IncreaseUserBalance(ctx context.Context, userId string, amount int64) error
+	DecreaseUserBalance(ctx context.Context, userId string, amount int64) error
+}
+
 type UserService struct {
 	userRepo repositories.IUserRepository
 }

@@ -11,6 +11,15 @@ type SmsServiceConfig struct {
 	QueueCapacity int `mapstructure:"queue_capacity"`
 }
 
+type ISmsService interface {
+	ScheduleSms(ctx context.Context, userId string, msgs []models.Sms) error
+	GetUserSms(ctx context.Context, userId string) ([]models.Sms, error)
+	EnqueueEarliest(ctx context.Context, count int) (int, error)
+	SetMessageAsFailed(ctx context.Context, id string) (models.Sms, error)
+	SetMessageAsSent(ctx context.Context, id string) (models.Sms, error)
+	SendFromQueue(ctx context.Context) (models.Sms, error)
+}
+
 type SmsService struct {
 	smsRepo   repositories.ISmsRepository
 	smsSender repositories.ISmsSender

@@ -24,3 +24,15 @@ packages:
       pkgname: "mocks"
       dir: '{{.InterfaceDirRelative}}/../mocks'
 
+  github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/services:
+    config:
+      all: true
+      pkgname: "mocks"
+      dir: '{{.InterfaceDirRelative}}/../mocks'
+
+  github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services:
+    config:
+      all: true
+      pkgname: "mocks"
+      dir: '{{.InterfaceDirRelative}}/../mocks'
+
