@@ -13,8 +13,13 @@ const (
 	wrongTypeError = "WRONGTYPE Operation against a key holding the wrong kind of value"
 )
 
-func (r *Repository) Enqueue(ctx context.Context, msg models.Sms) error {
-	_, err := r.queueClient.LPush(ctx, r.cfg.QueueName, common.ValueToJSON(msg)).Result()
+func (r *Repository) Enqueue(ctx context.Context, msg []models.Sms) error {
+	strValues := make([]any, len(msg))
+	for i := range msg {
+		strValues[i] = common.ValueToJSON(msg[i])
+	}
+
+	_, err := r.queueClient.LPush(ctx, r.cfg.QueueName, strValues...).Result()
 	if err != nil {
 		if err.Error() == wrongTypeError {
 			return models.InvalidQueueError

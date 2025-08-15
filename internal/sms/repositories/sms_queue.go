@@ -7,7 +7,7 @@ import (
 )
 
 type ISmsQueue interface {
-	Enqueue(ctx context.Context, msg models.Sms) error
+	Enqueue(ctx context.Context, msg []models.Sms) error
 	GetLength(ctx context.Context) (int, error)
 	Pop(ctx context.Context) (models.Sms, error)
 }

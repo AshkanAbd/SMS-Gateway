@@ -56,14 +56,53 @@ func (s *SmsService) GetUserSms(ctx context.Context, userId string) ([]models.Sm
 }
 
 func (s *SmsService) EnqueueEarliest(ctx context.Context, count int) (int, error) {
-	enqueuedCount := 0
-	for range count {
-		newEnqueued, err := s.smsRepo.EnqueueEarliestMessage(ctx)
-		if err != nil {
-			return 0, err
-		}
-		enqueuedCount += newEnqueued
+	enqueuedMsgs, err := s.smsRepo.EnqueueMessages(ctx, count)
+	if err != nil {
+		return 0, err
 	}
 
-	return enqueuedCount, nil
+	if err := s.smsQueue.Enqueue(ctx, enqueuedMsgs); err != nil {
+		ids := make([]string, len(enqueuedMsgs))
+		for i := range enqueuedMsgs {
+			ids[i] = enqueuedMsgs[i].UserId
+		}
+
+		if scheduleErr := s.smsRepo.RescheduledMessages(ctx, ids); scheduleErr != nil {
+			return 0, scheduleErr
+		}
+		return 0, err
+	}
+
+	return len(enqueuedMsgs), nil
+}
+
+func (s *SmsService) SetMessageAsFailed(ctx context.Context, id string) (models.Sms, error) {
+	res, err := s.smsRepo.SetMessageAsFailed(ctx, id)
+	if err != nil {
+		return models.Sms{}, err
+	}
+
+	return res, nil
+}
+
+func (s *SmsService) SetMessageAsSent(ctx context.Context, id string) (models.Sms, error) {
+	res, err := s.smsRepo.SetMessageAsSent(ctx, id)
+	if err != nil {
+		return models.Sms{}, err
+	}
+
+	return res, nil
+}
+
+func (s *SmsService) SendFromQueue(ctx context.Context) (models.Sms, error) {
+	msg, err := s.smsQueue.Pop(ctx)
+	if err != nil {
+		return models.Sms{}, err
+	}
+
+	if err := s.smsSender.Send(ctx, msg); err != nil {
+		return s.SetMessageAsFailed(ctx, msg.ID)
+	}
+
+	return s.SetMessageAsSent(ctx, msg.ID)
 }

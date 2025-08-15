@@ -95,62 +95,70 @@ func (_c *MockISmsRepository_CreateScheduleMessages_Call) RunAndReturn(run func(
 	return _c
 }
 
-// EnqueueEarliestMessage provides a mock function for the type MockISmsRepository
-func (_mock *MockISmsRepository) EnqueueEarliestMessage(ctx context.Context) (int, error) {
-	ret := _mock.Called(ctx)
+// EnqueueMessages provides a mock function for the type MockISmsRepository
+func (_mock *MockISmsRepository) EnqueueMessages(ctx context.Context, count int) ([]models.Sms, error) {
+	ret := _mock.Called(ctx, count)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EnqueueEarliestMessage")
+		panic("no return value specified for EnqueueMessages")
 	}
 
-	var r0 int
+	var r0 []models.Sms
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (int, error)); ok {
-		return returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]models.Sms, error)); ok {
+		return returnFunc(ctx, count)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) int); ok {
-		r0 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []models.Sms); ok {
+		r0 = returnFunc(ctx, count)
 	} else {
-		r0 = ret.Get(0).(int)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Sms)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = returnFunc(ctx)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, count)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockISmsRepository_EnqueueEarliestMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnqueueEarliestMessage'
-type MockISmsRepository_EnqueueEarliestMessage_Call struct {
+// MockISmsRepository_EnqueueMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnqueueMessages'
+type MockISmsRepository_EnqueueMessages_Call struct {
 	*mock.Call
 }
 
-// EnqueueEarliestMessage is a helper method to define mock.On call
+// EnqueueMessages is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockISmsRepository_Expecter) EnqueueEarliestMessage(ctx interface{}) *MockISmsRepository_EnqueueEarliestMessage_Call {
-	return &MockISmsRepository_EnqueueEarliestMessage_Call{Call: _e.mock.On("EnqueueEarliestMessage", ctx)}
+//   - count int
+func (_e *MockISmsRepository_Expecter) EnqueueMessages(ctx interface{}, count interface{}) *MockISmsRepository_EnqueueMessages_Call {
+	return &MockISmsRepository_EnqueueMessages_Call{Call: _e.mock.On("EnqueueMessages", ctx, count)}
 }
 
-func (_c *MockISmsRepository_EnqueueEarliestMessage_Call) Run(run func(ctx context.Context)) *MockISmsRepository_EnqueueEarliestMessage_Call {
+func (_c *MockISmsRepository_EnqueueMessages_Call) Run(run func(ctx context.Context, count int)) *MockISmsRepository_EnqueueMessages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
 }
 
-func (_c *MockISmsRepository_EnqueueEarliestMessage_Call) Return(n int, err error) *MockISmsRepository_EnqueueEarliestMessage_Call {
-	_c.Call.Return(n, err)
+func (_c *MockISmsRepository_EnqueueMessages_Call) Return(smss []models.Sms, err error) *MockISmsRepository_EnqueueMessages_Call {
+	_c.Call.Return(smss, err)
 	return _c
 }
 
-func (_c *MockISmsRepository_EnqueueEarliestMessage_Call) RunAndReturn(run func(ctx context.Context) (int, error)) *MockISmsRepository_EnqueueEarliestMessage_Call {
+func (_c *MockISmsRepository_EnqueueMessages_Call) RunAndReturn(run func(ctx context.Context, count int) ([]models.Sms, error)) *MockISmsRepository_EnqueueMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -219,6 +227,195 @@ func (_c *MockISmsRepository_GetMessagesByUserId_Call) Return(smss []models.Sms,
 }
 
 func (_c *MockISmsRepository_GetMessagesByUserId_Call) RunAndReturn(run func(ctx context.Context, userId string) ([]models.Sms, error)) *MockISmsRepository_GetMessagesByUserId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RescheduledMessages provides a mock function for the type MockISmsRepository
+func (_mock *MockISmsRepository) RescheduledMessages(ctx context.Context, ids []string) error {
+	ret := _mock.Called(ctx, ids)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RescheduledMessages")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = returnFunc(ctx, ids)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockISmsRepository_RescheduledMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RescheduledMessages'
+type MockISmsRepository_RescheduledMessages_Call struct {
+	*mock.Call
+}
+
+// RescheduledMessages is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ids []string
+func (_e *MockISmsRepository_Expecter) RescheduledMessages(ctx interface{}, ids interface{}) *MockISmsRepository_RescheduledMessages_Call {
+	return &MockISmsRepository_RescheduledMessages_Call{Call: _e.mock.On("RescheduledMessages", ctx, ids)}
+}
+
+func (_c *MockISmsRepository_RescheduledMessages_Call) Run(run func(ctx context.Context, ids []string)) *MockISmsRepository_RescheduledMessages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISmsRepository_RescheduledMessages_Call) Return(err error) *MockISmsRepository_RescheduledMessages_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockISmsRepository_RescheduledMessages_Call) RunAndReturn(run func(ctx context.Context, ids []string) error) *MockISmsRepository_RescheduledMessages_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetMessageAsFailed provides a mock function for the type MockISmsRepository
+func (_mock *MockISmsRepository) SetMessageAsFailed(ctx context.Context, id string) (models.Sms, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetMessageAsFailed")
+	}
+
+	var r0 models.Sms
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (models.Sms, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) models.Sms); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Get(0).(models.Sms)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockISmsRepository_SetMessageAsFailed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMessageAsFailed'
+type MockISmsRepository_SetMessageAsFailed_Call struct {
+	*mock.Call
+}
+
+// SetMessageAsFailed is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockISmsRepository_Expecter) SetMessageAsFailed(ctx interface{}, id interface{}) *MockISmsRepository_SetMessageAsFailed_Call {
+	return &MockISmsRepository_SetMessageAsFailed_Call{Call: _e.mock.On("SetMessageAsFailed", ctx, id)}
+}
+
+func (_c *MockISmsRepository_SetMessageAsFailed_Call) Run(run func(ctx context.Context, id string)) *MockISmsRepository_SetMessageAsFailed_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISmsRepository_SetMessageAsFailed_Call) Return(sms models.Sms, err error) *MockISmsRepository_SetMessageAsFailed_Call {
+	_c.Call.Return(sms, err)
+	return _c
+}
+
+func (_c *MockISmsRepository_SetMessageAsFailed_Call) RunAndReturn(run func(ctx context.Context, id string) (models.Sms, error)) *MockISmsRepository_SetMessageAsFailed_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetMessageAsSent provides a mock function for the type MockISmsRepository
+func (_mock *MockISmsRepository) SetMessageAsSent(ctx context.Context, id string) (models.Sms, error) {
+	ret := _mock.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetMessageAsSent")
+	}
+
+	var r0 models.Sms
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (models.Sms, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) models.Sms); ok {
+		r0 = returnFunc(ctx, id)
+	} else {
+		r0 = ret.Get(0).(models.Sms)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockISmsRepository_SetMessageAsSent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMessageAsSent'
+type MockISmsRepository_SetMessageAsSent_Call struct {
+	*mock.Call
+}
+
+// SetMessageAsSent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+func (_e *MockISmsRepository_Expecter) SetMessageAsSent(ctx interface{}, id interface{}) *MockISmsRepository_SetMessageAsSent_Call {
+	return &MockISmsRepository_SetMessageAsSent_Call{Call: _e.mock.On("SetMessageAsSent", ctx, id)}
+}
+
+func (_c *MockISmsRepository_SetMessageAsSent_Call) Run(run func(ctx context.Context, id string)) *MockISmsRepository_SetMessageAsSent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockISmsRepository_SetMessageAsSent_Call) Return(sms models.Sms, err error) *MockISmsRepository_SetMessageAsSent_Call {
+	_c.Call.Return(sms, err)
+	return _c
+}
+
+func (_c *MockISmsRepository_SetMessageAsSent_Call) RunAndReturn(run func(ctx context.Context, id string) (models.Sms, error)) *MockISmsRepository_SetMessageAsSent_Call {
 	_c.Call.Return(run)
 	return _c
 }

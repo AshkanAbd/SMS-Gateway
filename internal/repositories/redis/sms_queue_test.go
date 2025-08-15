@@ -3,6 +3,7 @@ package redis_test
 import (
 	"context"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -61,12 +62,21 @@ func TestRepository_Enqueue(t *testing.T) {
 		}()
 
 		ctx := context.Background()
-		expectedMsg := models.Sms{
-			UserId:   "1",
-			Content:  "Test Content",
-			Receiver: "09123456789",
-			Cost:     100,
-			Status:   models.StatusEnqueued,
+		expectedMsg := []models.Sms{
+			{
+				UserId:   "1",
+				Content:  "Test Content 1",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
+			{
+				UserId:   "2",
+				Content:  "Test Content 2",
+				Receiver: "09123456788",
+				Cost:     200,
+				Status:   models.StatusEnqueued,
+			},
 		}
 
 		actualErr := repo.Enqueue(ctx, expectedMsg)
@@ -74,16 +84,19 @@ func TestRepository_Enqueue(t *testing.T) {
 
 		res, err := conn.GetClient(queueDB).LRange(ctx, queueName, 0, -1).Result()
 		assert.NoError(t, err)
-		assert.Len(t, res, 1)
+		assert.Len(t, res, 2)
 
+		slices.Reverse(expectedMsg)
 		actualMsg := models.Sms{}
-		err = common.JSONToValue(res[0], &actualMsg)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedMsg.UserId, actualMsg.UserId)
-		assert.Equal(t, expectedMsg.Content, actualMsg.Content)
-		assert.Equal(t, expectedMsg.Receiver, actualMsg.Receiver)
-		assert.Equal(t, expectedMsg.Cost, actualMsg.Cost)
-		assert.Equal(t, expectedMsg.Status, actualMsg.Status)
+		for i := 0; i < 2; i++ {
+			err = common.JSONToValue(res[i], &actualMsg)
+			assert.NoError(t, err)
+			assert.Equal(t, expectedMsg[i].UserId, actualMsg.UserId)
+			assert.Equal(t, expectedMsg[i].Content, actualMsg.Content)
+			assert.Equal(t, expectedMsg[i].Receiver, actualMsg.Receiver)
+			assert.Equal(t, expectedMsg[i].Cost, actualMsg.Cost)
+			assert.Equal(t, expectedMsg[i].Status, actualMsg.Status)
+		}
 	})
 
 	t.Run("should return InvalidQueueError when key is not list", func(t *testing.T) {
@@ -96,12 +109,14 @@ func TestRepository_Enqueue(t *testing.T) {
 		}()
 
 		ctx := context.Background()
-		expectedMsg := models.Sms{
-			UserId:   "1",
-			Content:  "Test Content",
-			Receiver: "09123456789",
-			Cost:     100,
-			Status:   models.StatusEnqueued,
+		expectedMsg := []models.Sms{
+			{
+				UserId:   "1",
+				Content:  "Test Content",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
 		}
 
 		err = conn.GetClient(queueDB).Set(ctx, queueName, 0, -1).Err()

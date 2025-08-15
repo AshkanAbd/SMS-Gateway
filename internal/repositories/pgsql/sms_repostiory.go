@@ -57,48 +57,99 @@ func (r *Repository) GetMessagesByUserId(ctx context.Context, userId string) ([]
 	return ss, nil
 }
 
-func (r *Repository) EnqueueEarliestMessage(ctx context.Context) (int, error) {
-	rowsAffected := 0
-	err := r.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var ses []smsEntity
+func (r *Repository) SetMessageAsFailed(ctx context.Context, id string) (models.Sms, error) {
+	se := smsEntity{}
 
-		res := tx.WithContext(ctx).
-			Model(&ses).
-			Where("id IN (?)",
-				tx.WithContext(ctx).
-					Model(&smsEntity{}).
-					Select("id").
-					Where("status", models.StatusScheduled).
-					Order("created_at ASC, id ASC").
-					Limit(1).
-					Clauses(clause.Locking{
-						Strength: "UPDATE",
-						Options:  "SKIP LOCKED",
-					}),
-			).Clauses(clause.Returning{}).
-			Updates(map[string]any{
-				"status":     models.StatusEnqueued,
-				"updated_at": time.Now(),
-			})
+	res := r.conn.WithContext(ctx).
+		Model(&se).
+		Clauses(clause.Returning{}).
+		Where("id = ? AND status = ?", id, models.StatusEnqueued).
+		Updates(map[string]any{
+			"status":     models.StatusFailed,
+			"updated_at": time.Now(),
+		})
 
-		if res.Error != nil {
-			return res.Error
-		}
-		rowsAffected = int(res.RowsAffected)
-
-		if res.RowsAffected == 0 {
-			return nil
-		}
-
-		if err := r.smsQueue.Enqueue(ctx, toMessage(ses[0])); err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return 0, err
+	if res.Error != nil {
+		return models.Sms{}, res.Error
 	}
 
-	return rowsAffected, nil
+	if res.RowsAffected == 0 {
+		return models.Sms{}, models.MessageNotExistError
+	}
+
+	return toMessage(se), nil
+}
+
+func (r *Repository) SetMessageAsSent(ctx context.Context, id string) (models.Sms, error) {
+	se := smsEntity{}
+
+	res := r.conn.WithContext(ctx).
+		Model(&se).
+		Clauses(clause.Returning{}).
+		Where("id = ? AND status = ?", id, models.StatusEnqueued).
+		Updates(map[string]any{
+			"status":     models.StatusSent,
+			"updated_at": time.Now(),
+		})
+
+	if res.Error != nil {
+		return models.Sms{}, res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return models.Sms{}, models.MessageNotExistError
+	}
+
+	return toMessage(se), nil
+}
+
+func (r *Repository) EnqueueMessages(ctx context.Context, count int) ([]models.Sms, error) {
+	var ses []smsEntity
+
+	res := r.conn.WithContext(ctx).
+		Model(&ses).
+		Where("id IN (?)",
+			r.conn.WithContext(ctx).
+				Model(&smsEntity{}).
+				Select("id").
+				Where("status", models.StatusScheduled).
+				Order("created_at ASC, id ASC").
+				Limit(count).
+				Clauses(clause.Locking{
+					Strength: "UPDATE",
+					Options:  "SKIP LOCKED",
+				}),
+		).Clauses(clause.Returning{}).
+		Updates(map[string]any{
+			"status":     models.StatusEnqueued,
+			"updated_at": time.Now(),
+		})
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	ss := make([]models.Sms, len(ses))
+	for i := range ses {
+		ss[i] = toMessage(ses[i])
+	}
+
+	return ss, nil
+}
+
+func (r *Repository) RescheduledMessages(ctx context.Context, ids []string) error {
+	res := r.conn.WithContext(ctx).
+		Model(&smsEntity{}).
+		Clauses(clause.Returning{}).
+		Where("id IN ?", ids).
+		Updates(map[string]any{
+			"status":     models.StatusScheduled,
+			"updated_at": time.Now(),
+		})
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	return nil
 }

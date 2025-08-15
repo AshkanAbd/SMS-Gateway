@@ -2,21 +2,18 @@ package pgsql_test
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"testing"
 
-	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/mocks"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/sms/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 
 	umodels "github.com/AshkanAbd/arvancloud_sms_gateway/internal/user/models"
 )
 
 func TestRepository_CreateScheduleMessages(t *testing.T) {
 	t.Run("should create messages", func(t *testing.T) {
-		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
 		ctx := context.Background()
@@ -59,7 +56,7 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 	})
 
 	t.Run("should return EmptyContentError when content is empty and not create any messages", func(t *testing.T) {
-		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
 		ctx := context.Background()
@@ -103,7 +100,7 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 	})
 
 	t.Run("should return EmptyReceiverError when receiver is empty and not create any messages", func(t *testing.T) {
-		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
 		ctx := context.Background()
@@ -149,7 +146,7 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 
 func TestRepository_GetMessagesByUserId(t *testing.T) {
 	t.Run("should return user messages", func(t *testing.T) {
-		conn, repo, err := initDB(mocks.NewMockISmsQueue(t))
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
 		ctx := context.Background()
@@ -205,14 +202,17 @@ func TestRepository_GetMessagesByUserId(t *testing.T) {
 	})
 }
 
-func TestRepository_EnqueueEarliestMessages(t *testing.T) {
-	t.Run("should enqueue earliest message", func(t *testing.T) {
+func TestRepository_SetMessageAsFailed(t *testing.T) {
+	t.Run("should set message as failed", func(t *testing.T) {
 		ctx := context.Background()
 
-		mockQueue := mocks.NewMockISmsQueue(t)
-
-		conn, repo, err := initDB(mockQueue)
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
 
 		tmpUser := umodels.User{
 			Name:    "AshkanAbd",
@@ -224,14 +224,54 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		inputMsgs := []models.Sms{
 			{
 				UserId:   createdUser.ID,
-				Content:  "Earliest Message",
-				Receiver: "09111111111",
+				Content:  "Test Content",
+				Receiver: "09123456789",
 				Cost:     100,
-				Status:   models.StatusScheduled,
+				Status:   models.StatusEnqueued,
 			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		actualMsg, actualErr := repo.SetMessageAsFailed(ctx, userMsgs[0].ID)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, userMsgs[0].ID, actualMsg.ID)
+		assert.Equal(t, userMsgs[0].CreatedAt, actualMsg.CreatedAt)
+		assert.Equal(t, userMsgs[0].UserId, actualMsg.UserId)
+		assert.Equal(t, userMsgs[0].Content, actualMsg.Content)
+		assert.Equal(t, userMsgs[0].Receiver, actualMsg.Receiver)
+		assert.Equal(t, userMsgs[0].Cost, actualMsg.Cost)
+		assert.Equal(t, models.StatusFailed, actualMsg.Status)
+		assert.True(t, userMsgs[0].UpdatedAt.Before(actualMsg.UpdatedAt))
+	})
+
+	t.Run("should return MessageNotExistError when message status is not enqueue", func(t *testing.T) {
+		ctx := context.Background()
+
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
 			{
 				UserId:   createdUser.ID,
-				Content:  "Test Content 2",
+				Content:  "Test Content",
 				Receiver: "09123456789",
 				Cost:     100,
 				Status:   models.StatusScheduled,
@@ -243,51 +283,41 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 
 		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
 		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
-		mockQueue.EXPECT().
-			Enqueue(ctx, mock.MatchedBy(func(s models.Sms) bool {
-				return s.Status == models.StatusEnqueued && s.ID == userMsgs[1].ID &&
-					s.Content == userMsgs[1].Content && s.Receiver == userMsgs[1].Receiver
-			})).Return(nil).
-			Once()
-
-		actualUpdated, actualErr := repo.EnqueueEarliestMessage(ctx)
-		assert.NoError(t, actualErr)
-		assert.Equal(t, 1, actualUpdated)
-
-		actualMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, len(inputMsgs), len(actualMsgs))
-		assert.Equal(t, models.StatusScheduled, actualMsgs[0].Status)
-		assert.Equal(t, models.StatusEnqueued, actualMsgs[1].Status)
-
-		err = cleanDB(conn)
-		assert.NoError(t, err)
+		_, actualErr := repo.SetMessageAsFailed(ctx, userMsgs[0].ID)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.MessageNotExistError, actualErr)
 	})
 
-	t.Run("should return 0 when no message to enqueue", func(t *testing.T) {
+	t.Run("should return MessageNotExistError when message not exists", func(t *testing.T) {
 		ctx := context.Background()
 
-		mockQueue := mocks.NewMockISmsQueue(t)
-
-		conn, repo, err := initDB(mockQueue)
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
-		actualUpdated, actualErr := repo.EnqueueEarliestMessage(ctx)
-		assert.NoError(t, actualErr)
-		assert.Equal(t, 0, actualUpdated)
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
 
-		err = cleanDB(conn)
-		assert.NoError(t, err)
+		_, actualErr := repo.SetMessageAsFailed(ctx, "1")
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.MessageNotExistError, actualErr)
 	})
+}
 
-	t.Run("should return error and rollback when can not enqueue", func(t *testing.T) {
+func TestRepository_SetMessageAsSent(t *testing.T) {
+	t.Run("should set message as sent", func(t *testing.T) {
 		ctx := context.Background()
 
-		mockQueue := mocks.NewMockISmsQueue(t)
-
-		conn, repo, err := initDB(mockQueue)
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
 
 		tmpUser := umodels.User{
 			Name:    "AshkanAbd",
@@ -299,8 +329,114 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 		inputMsgs := []models.Sms{
 			{
 				UserId:   createdUser.ID,
-				Content:  "Earliest Message",
-				Receiver: "09111111111",
+				Content:  "Test Content",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		actualMsg, actualErr := repo.SetMessageAsSent(ctx, userMsgs[0].ID)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, userMsgs[0].ID, actualMsg.ID)
+		assert.Equal(t, userMsgs[0].CreatedAt, actualMsg.CreatedAt)
+		assert.Equal(t, userMsgs[0].UserId, actualMsg.UserId)
+		assert.Equal(t, userMsgs[0].Content, actualMsg.Content)
+		assert.Equal(t, userMsgs[0].Receiver, actualMsg.Receiver)
+		assert.Equal(t, userMsgs[0].Cost, actualMsg.Cost)
+		assert.Equal(t, models.StatusSent, actualMsg.Status)
+		assert.True(t, userMsgs[0].UpdatedAt.Before(actualMsg.UpdatedAt))
+	})
+
+	t.Run("should return MessageNotExistError when message status is not enqueue", func(t *testing.T) {
+		ctx := context.Background()
+
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		_, actualErr := repo.SetMessageAsSent(ctx, userMsgs[0].ID)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.MessageNotExistError, actualErr)
+	})
+
+	t.Run("should return MessageNotExistError when message not exists", func(t *testing.T) {
+		ctx := context.Background()
+
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
+
+		_, actualErr := repo.SetMessageAsSent(ctx, "1")
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.MessageNotExistError, actualErr)
+	})
+}
+
+func TestRepository_EnqueueMessages(t *testing.T) {
+	t.Run("should enqueue scheduled message with given count", func(t *testing.T) {
+		ctx := context.Background()
+		countInput := 2
+
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456789",
 				Cost:     100,
 				Status:   models.StatusScheduled,
 			},
@@ -311,38 +447,167 @@ func TestRepository_EnqueueEarliestMessages(t *testing.T) {
 				Cost:     100,
 				Status:   models.StatusScheduled,
 			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 3",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
 		}
 
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		expectedMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		actualMsgs, actualErr := repo.EnqueueMessages(ctx, countInput)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, countInput, len(actualMsgs))
+		slices.Reverse(userMsgs)
+		for i := 0; i < countInput; i++ {
+			assert.Equal(t, userMsgs[i].ID, actualMsgs[i].ID)
+			assert.Equal(t, userMsgs[i].CreatedAt, actualMsgs[i].CreatedAt)
+			assert.Equal(t, userMsgs[i].UserId, actualMsgs[i].UserId)
+			assert.Equal(t, userMsgs[i].Content, actualMsgs[i].Content)
+			assert.Equal(t, userMsgs[i].Receiver, actualMsgs[i].Receiver)
+			assert.Equal(t, userMsgs[i].Cost, actualMsgs[i].Cost)
+			assert.True(t, userMsgs[i].UpdatedAt.Before(actualMsgs[i].UpdatedAt))
+			assert.Equal(t, models.StatusEnqueued, actualMsgs[i].Status)
+		}
+	})
+
+	t.Run("should not enqueue if no message was in schedule", func(t *testing.T) {
+		ctx := context.Background()
+
+		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
-		mockQueue.EXPECT().
-			Enqueue(ctx, mock.Anything).
-			Return(fmt.Errorf("error")).
-			Once()
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
 
-		actualUpdated, actualErr := repo.EnqueueEarliestMessage(ctx)
-		assert.Error(t, actualErr)
-		assert.Equal(t, 0, actualUpdated)
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 2",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusSent,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 3",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusFailed,
+			},
+		}
+		countInput := len(inputMsgs)
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		actualMsgs, actualErr := repo.EnqueueMessages(ctx, countInput)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, 0, len(actualMsgs))
+	})
+}
+
+func TestRepository_RescheduledMessages(t *testing.T) {
+	t.Run("should reschedule messages with given id", func(t *testing.T) {
+		ctx := context.Background()
+
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		defer func() {
+			err = cleanDB(conn)
+			assert.NoError(t, err)
+		}()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusSent,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 2",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 3",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusEnqueued,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, len(inputMsgs), len(userMsgs))
+
+		actualErr := repo.RescheduledMessages(ctx, []string{
+			userMsgs[0].ID,
+			userMsgs[2].ID,
+		})
+		assert.NoError(t, actualErr)
 
 		actualMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, len(expectedMsgs), len(actualMsgs))
-		for i := 0; i < len(expectedMsgs); i++ {
-			assert.Equal(t, expectedMsgs[i].ID, actualMsgs[i].ID)
-			assert.Equal(t, expectedMsgs[i].CreatedAt, actualMsgs[i].CreatedAt)
-			assert.Equal(t, expectedMsgs[i].UpdatedAt, actualMsgs[i].UpdatedAt)
-			assert.Equal(t, expectedMsgs[i].UserId, actualMsgs[i].UserId)
-			assert.Equal(t, expectedMsgs[i].Content, actualMsgs[i].Content)
-			assert.Equal(t, expectedMsgs[i].Receiver, actualMsgs[i].Receiver)
-			assert.Equal(t, expectedMsgs[i].Cost, actualMsgs[i].Cost)
-			assert.Equal(t, expectedMsgs[i].Status, actualMsgs[i].Status)
+		assert.Equal(t, len(actualMsgs), len(userMsgs))
+		for i := 0; i < len(userMsgs); i++ {
+			assert.Equal(t, userMsgs[i].ID, actualMsgs[i].ID)
+			assert.Equal(t, userMsgs[i].CreatedAt, actualMsgs[i].CreatedAt)
+			assert.Equal(t, userMsgs[i].UserId, actualMsgs[i].UserId)
+			assert.Equal(t, userMsgs[i].Content, actualMsgs[i].Content)
+			assert.Equal(t, userMsgs[i].Receiver, actualMsgs[i].Receiver)
+			assert.Equal(t, userMsgs[i].Cost, actualMsgs[i].Cost)
+			if i == 0 || i == 2 {
+				assert.True(t, userMsgs[i].UpdatedAt.Before(actualMsgs[i].UpdatedAt))
+				assert.Equal(t, models.StatusScheduled, actualMsgs[i].Status)
+			} else {
+				assert.Equal(t, userMsgs[i].UpdatedAt, actualMsgs[i].UpdatedAt)
+				assert.Equal(t, userMsgs[i].Status, actualMsgs[i].Status)
+			}
 		}
-
-		err = cleanDB(conn)
-		assert.NoError(t, err)
 	})
 }

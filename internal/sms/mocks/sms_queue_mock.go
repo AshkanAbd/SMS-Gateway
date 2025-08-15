@@ -39,7 +39,7 @@ func (_m *MockISmsQueue) EXPECT() *MockISmsQueue_Expecter {
 }
 
 // Enqueue provides a mock function for the type MockISmsQueue
-func (_mock *MockISmsQueue) Enqueue(ctx context.Context, msg models.Sms) error {
+func (_mock *MockISmsQueue) Enqueue(ctx context.Context, msg []models.Sms) error {
 	ret := _mock.Called(ctx, msg)
 
 	if len(ret) == 0 {
@@ -47,7 +47,7 @@ func (_mock *MockISmsQueue) Enqueue(ctx context.Context, msg models.Sms) error {
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, models.Sms) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []models.Sms) error); ok {
 		r0 = returnFunc(ctx, msg)
 	} else {
 		r0 = ret.Error(0)
@@ -62,20 +62,20 @@ type MockISmsQueue_Enqueue_Call struct {
 
 // Enqueue is a helper method to define mock.On call
 //   - ctx context.Context
-//   - msg models.Sms
+//   - msg []models.Sms
 func (_e *MockISmsQueue_Expecter) Enqueue(ctx interface{}, msg interface{}) *MockISmsQueue_Enqueue_Call {
 	return &MockISmsQueue_Enqueue_Call{Call: _e.mock.On("Enqueue", ctx, msg)}
 }
 
-func (_c *MockISmsQueue_Enqueue_Call) Run(run func(ctx context.Context, msg models.Sms)) *MockISmsQueue_Enqueue_Call {
+func (_c *MockISmsQueue_Enqueue_Call) Run(run func(ctx context.Context, msg []models.Sms)) *MockISmsQueue_Enqueue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 models.Sms
+		var arg1 []models.Sms
 		if args[1] != nil {
-			arg1 = args[1].(models.Sms)
+			arg1 = args[1].([]models.Sms)
 		}
 		run(
 			arg0,
@@ -90,7 +90,7 @@ func (_c *MockISmsQueue_Enqueue_Call) Return(err error) *MockISmsQueue_Enqueue_C
 	return _c
 }
 
-func (_c *MockISmsQueue_Enqueue_Call) RunAndReturn(run func(ctx context.Context, msg models.Sms) error) *MockISmsQueue_Enqueue_Call {
+func (_c *MockISmsQueue_Enqueue_Call) RunAndReturn(run func(ctx context.Context, msg []models.Sms) error) *MockISmsQueue_Enqueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
