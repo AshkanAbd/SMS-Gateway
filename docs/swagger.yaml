@@ -1,0 +1,211 @@
+basePath: /
+definitions:
+  handlers.createUserRequest:
+    properties:
+      name:
+        maxLength: 250
+        minLength: 3
+        type: string
+    required:
+    - name
+    type: object
+  handlers.increaseBalanceRequest:
+    properties:
+      balance:
+        type: integer
+    required:
+    - balance
+    type: object
+  handlers.smsRequest:
+    properties:
+      content:
+        maxLength: 1000
+        minLength: 3
+        type: string
+      receiver:
+        maxLength: 20
+        minLength: 10
+        type: string
+    required:
+    - content
+    - receiver
+    type: object
+  handlers.stdResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: SMS Gateway API
+  title: SMS Gateway API
+  version: "1.0"
+paths:
+  /user/:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user with the given name
+      parameters:
+      - description: User payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Create a new user
+      tags:
+      - users
+  /user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a user with the given ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Get user by ID
+      tags:
+      - users
+  /user/{id}/balance:
+    post:
+      consumes:
+      - application/json
+      description: Increase user balance with given ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User payload
+        in: body
+        name: balance
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.increaseBalanceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Increase user balance with given ID
+      tags:
+      - users
+  /user/{id}/sms:
+    get:
+      consumes:
+      - application/json
+      description: Returns a user messages with the given ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: desc
+        description: Order of results
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Number of items per page
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Get a user messages by ID
+      tags:
+      - users
+  /user/{id}/sms/bulk:
+    post:
+      consumes:
+      - application/json
+      description: Send bulk SMS with given data
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User payload
+        in: body
+        name: sms
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/handlers.smsRequest'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Send bulk SMS
+      tags:
+      - users
+  /user/{id}/sms/single:
+    post:
+      consumes:
+      - application/json
+      description: Send a single SMS with given data
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User payload
+        in: body
+        name: sms
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.smsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.stdResponse'
+      summary: Send a single SMS
+      tags:
+      - users
+swagger: "2.0"

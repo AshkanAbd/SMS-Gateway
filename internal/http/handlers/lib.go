@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"errors"
-	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
 	"net/http"
 
+	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/smsgateway"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -52,6 +52,16 @@ func NewHttpHandler(gateway *smsgateway.SmsGateway) *HttpHandler {
 	}
 }
 
+// CreateUser godoc
+//
+//	@Summary		Create a new user
+//	@Description	Creates a new user with the given name
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		createUserRequest	true	"User payload"
+//	@Success		200		{object}	stdResponse
+//	@Router			/user/ [post]
 func (h *HttpHandler) CreateUser(c *fiber.Ctx) error {
 	var req createUserRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -74,6 +84,16 @@ func (h *HttpHandler) CreateUser(c *fiber.Ctx) error {
 	return buildResponse(c, http.StatusOK, newObjectResponse(fromUser(createdUser)))
 }
 
+// GetUser returns a user
+//
+//	@Summary		Get user by ID
+//	@Description	Returns a user with the given ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int	true	"User ID"
+//	@Success		200	{object}	stdResponse
+//	@Router			/user/{id} [get]
 func (h *HttpHandler) GetUser(c *fiber.Ctx) error {
 	userId := c.Params("id")
 	if userId == "" {
@@ -92,6 +112,19 @@ func (h *HttpHandler) GetUser(c *fiber.Ctx) error {
 	return buildResponse(c, http.StatusOK, newObjectResponse(fromUser(user)))
 }
 
+// GetUserMessages returns user messages
+//
+//	@Summary		Get a user messages by ID
+//	@Description	Returns a user messages with the given ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path		int		true	"User ID"
+//	@Param			order		query		string	false	"Order of results"			Enums(asc, desc)	default(desc)
+//	@Param			page		query		int		false	"Page number"				default(1)
+//	@Param			pageSize	query		int		false	"Number of items per page"	default(10)
+//	@Success		200			{object}	stdResponse
+//	@Router			/user/{id}/sms [get]
 func (h *HttpHandler) GetUserMessages(c *fiber.Ctx) error {
 	userId := c.Params("id")
 	if userId == "" {
@@ -116,6 +149,17 @@ func (h *HttpHandler) GetUserMessages(c *fiber.Ctx) error {
 	return buildResponse(c, http.StatusOK, newObjectResponse(se))
 }
 
+// SendSingleMessage send a single SMS
+//
+//	@Summary		Send a single SMS
+//	@Description	Send a single SMS with given data
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int			true	"User ID"
+//	@Param			sms	body		smsRequest	true	"User payload"
+//	@Success		200	{object}	stdResponse
+//	@Router			/user/{id}/sms/single [post]
 func (h *HttpHandler) SendSingleMessage(c *fiber.Ctx) error {
 	userId := c.Params("id")
 	if userId == "" {
@@ -146,6 +190,17 @@ func (h *HttpHandler) SendSingleMessage(c *fiber.Ctx) error {
 	return buildResponse(c, http.StatusOK, newMessageResponse("message scheduled successfully"))
 }
 
+// SendBulkMessage send bulk SMS
+//
+//	@Summary		Send bulk SMS
+//	@Description	Send bulk SMS with given data
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		int				true	"User ID"
+//	@Param			sms	body		[]smsRequest	true	"User payload"
+//	@Success		200	{object}	stdResponse
+//	@Router			/user/{id}/sms/bulk [post]
 func (h *HttpHandler) SendBulkMessage(c *fiber.Ctx) error {
 	userId := c.Params("id")
 	if userId == "" {
@@ -156,9 +211,11 @@ func (h *HttpHandler) SendBulkMessage(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse(err.Error()))
 	}
-	validationErrs := h.getValidationErrors(req)
-	if len(validationErrs) > 0 {
-		return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
+	for i := range req {
+		validationErrs := h.getValidationErrors(req[i])
+		if len(validationErrs) > 0 {
+			return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
+		}
 	}
 
 	ss := make([]smsmodels.Sms, len(req))
@@ -180,6 +237,17 @@ func (h *HttpHandler) SendBulkMessage(c *fiber.Ctx) error {
 	return buildResponse(c, http.StatusOK, newMessageResponse("messages scheduled successfully"))
 }
 
+// IncreaseUserBalance increases user balance
+//
+//	@Summary		Increase user balance with given ID
+//	@Description	Increase user balance with given ID
+//	@Tags			users
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int						true	"User ID"
+//	@Param			balance	body		increaseBalanceRequest	true	"User payload"
+//	@Success		200		{object}	stdResponse
+//	@Router			/user/{id}/balance [post]
 func (h *HttpHandler) IncreaseUserBalance(c *fiber.Ctx) error {
 	userId := c.Params("id")
 	if userId == "" {

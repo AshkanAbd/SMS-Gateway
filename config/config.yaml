@@ -20,7 +20,7 @@ redis_repo:
 sms_gateway:
   enqueue_count: 10
   full_capacity_sleep_duration: 1s
-  empty_enqueue_sleep_duration: 100ms
+  empty_enqueue_sleep_duration: 1s
   send_worker_count: 1
   message_cost: 100
 

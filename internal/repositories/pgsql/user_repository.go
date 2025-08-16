@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"strings"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (r *Repository) CreateUser(ctx context.Context, user models.User) (models.User, error) {

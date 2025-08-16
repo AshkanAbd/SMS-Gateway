@@ -16,7 +16,9 @@ import (
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/repositories/redis"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/smsgateway"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 
+	_ "github.com/AshkanAbd/arvancloud_sms_gateway/docs"
 	smssrv "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services"
 	usersrv "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/services"
 	pkgCfg "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/config"
@@ -41,6 +43,11 @@ func closer(c io.Closer) {
 	}
 }
 
+// @title			SMS Gateway API
+// @version		1.0
+// @description	SMS Gateway API
+// @host			localhost:8000
+// @BasePath		/
 func main() {
 	appCtx, cancel := context.WithCancel(context.Background())
 
@@ -81,6 +88,8 @@ func main() {
 	})
 
 	app.Use(middlewares.Logger())
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	app.Post("/user", httpHandler.CreateUser)
 	app.Get("/user/:id", httpHandler.GetUser)
