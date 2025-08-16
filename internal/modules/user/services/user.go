@@ -68,7 +68,7 @@ func (u *UserService) DecreaseUserBalance(ctx context.Context, userId string, am
 		return 0, models.InvalidBalanceError
 	}
 
-	newBalance, err := u.userRepo.UpdateUserBalance(ctx, userId, amount)
+	newBalance, err := u.userRepo.UpdateUserBalance(ctx, userId, -amount)
 	if err != nil {
 		return 0, err
 	}

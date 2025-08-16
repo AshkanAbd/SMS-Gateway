@@ -189,7 +189,7 @@ func TestUserService_DecreaseUserBalance(t *testing.T) {
 		mockRepo := mocks.NewMockIUserRepository(t)
 
 		mockRepo.EXPECT().
-			UpdateUserBalance(ctx, inputID, inputAmount).
+			UpdateUserBalance(ctx, inputID, -inputAmount).
 			Return(100, nil).
 			Once()
 
@@ -218,7 +218,7 @@ func TestUserService_DecreaseUserBalance(t *testing.T) {
 		mockRepo := mocks.NewMockIUserRepository(t)
 
 		mockRepo.EXPECT().
-			UpdateUserBalance(ctx, inputID, inputAmount).
+			UpdateUserBalance(ctx, inputID, -inputAmount).
 			Return(0, models.UserNotExistError).
 			Once()
 
@@ -249,7 +249,7 @@ func TestUserService_DecreaseUserBalance(t *testing.T) {
 		mockRepo := mocks.NewMockIUserRepository(t)
 
 		mockRepo.EXPECT().
-			UpdateUserBalance(ctx, inputID, inputAmount).
+			UpdateUserBalance(ctx, inputID, -inputAmount).
 			Return(0, models.InsufficientBalanceError).
 			Once()
 

@@ -37,41 +37,56 @@ func (c createUserRequest) toUser() usermodels.User {
 }
 
 type userResponse struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Balance   int64     `json:"balance"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        string     `json:"id"`
+	Name      string     `json:"name"`
+	Balance   int64      `json:"balance"`
+	CreatedAt *time.Time `json:"createdAt"`
 }
 
 func fromUser(user usermodels.User) userResponse {
-	return userResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Balance:   user.Balance,
-		CreatedAt: user.CreatedAt,
+	resp := userResponse{
+		ID:      user.ID,
+		Name:    user.Name,
+		Balance: user.Balance,
 	}
+	if user.Entity != nil {
+		resp.ID = user.ID
+	}
+	if user.CreateDate != nil {
+		resp.CreatedAt = &user.CreatedAt
+	}
+
+	return resp
 }
 
 type smsResponse struct {
-	ID        string    `json:"id"`
-	Content   string    `json:"content"`
-	Receiver  string    `json:"receiver"`
-	Status    string    `json:"status"`
-	Cost      int       `json:"cost"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        string     `json:"id"`
+	Content   string     `json:"content"`
+	Receiver  string     `json:"receiver"`
+	Status    string     `json:"status"`
+	Cost      int        `json:"cost"`
+	CreatedAt *time.Time `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt"`
 }
 
 func fromSms(sms smsmodels.Sms) smsResponse {
-	return smsResponse{
-		ID:        sms.ID,
-		Content:   sms.Content,
-		Receiver:  sms.Receiver,
-		Status:    fromSmsStatus(sms.Status),
-		Cost:      sms.Cost,
-		CreatedAt: sms.CreatedAt,
-		UpdatedAt: sms.UpdatedAt,
+	resp := smsResponse{
+		Content:  sms.Content,
+		Receiver: sms.Receiver,
+		Status:   fromSmsStatus(sms.Status),
+		Cost:     sms.Cost,
 	}
+	if sms.Entity != nil {
+		resp.ID = sms.ID
+	}
+	if sms.CreateDate != nil {
+		resp.CreatedAt = &sms.CreatedAt
+	}
+	if sms.UpdateDate != nil {
+		resp.UpdatedAt = &sms.UpdatedAt
+	}
+
+	return resp
 }
 
 func fromSmsStatus(status smsmodels.SmsStatus) string {
