@@ -10,11 +10,13 @@ import (
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/shared"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/pkg/metrics"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSmsService_ScheduleMessage(t *testing.T) {
 	cfg := services.SmsServiceConfig{}
+	metrics.RegisterMetrics()
 
 	t.Run("should schedule sms", func(t *testing.T) {
 		ctx := context.Background()

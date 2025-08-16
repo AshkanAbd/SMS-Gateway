@@ -94,12 +94,13 @@ func main() {
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
 
-	app.Post("/user", httpHandler.CreateUser)
-	app.Get("/user/:id", httpHandler.GetUser)
-	app.Get("/user/:id/sms", httpHandler.GetUserMessages)
-	app.Post("/user/:id/balance", httpHandler.IncreaseUserBalance)
-	app.Post("/user/:id/sms/single", httpHandler.SendSingleMessage)
-	app.Post("/user/:id/sms/bulk", httpHandler.SendBulkMessage)
+	api := app.Group("/api")
+	api.Post("/user", httpHandler.CreateUser)
+	api.Get("/user/:id", httpHandler.GetUser)
+	api.Get("/user/:id/sms", httpHandler.GetUserMessages)
+	api.Post("/user/:id/balance", httpHandler.IncreaseUserBalance)
+	api.Post("/user/:id/sms/single", httpHandler.SendSingleMessage)
+	api.Post("/user/:id/sms/bulk", httpHandler.SendBulkMessage)
 
 	enqueueWorkerErrCh := gateway.StartEnqueueWorker(appCtx)
 	sendWorkerErrCh := gateway.StartSendWorkers(appCtx)

@@ -8,6 +8,15 @@ import (
 	pkgLog "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
 )
 
+// HealthCheck returns application health check
+//
+//	@Summary		Application health check
+//	@Description	Application health check
+//	@Tags			System
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	any
+//	@Router			/healthz [get]
 func HealthCheck(errChs []<-chan error) fiber.Handler {
 	healthy := true
 	go func() {

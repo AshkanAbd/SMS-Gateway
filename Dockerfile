@@ -9,7 +9,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o app cmd/http/main.go 
 
-FROM alpine
+FROM alpine:3.19
 
 WORKDIR /app
 

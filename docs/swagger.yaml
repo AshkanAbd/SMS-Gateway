@@ -43,7 +43,7 @@ info:
   title: SMS Gateway API
   version: "1.0"
 paths:
-  /user/:
+  /api/user/:
     post:
       consumes:
       - application/json
@@ -65,7 +65,7 @@ paths:
       summary: Create a new user
       tags:
       - users
-  /user/{id}:
+  /api/user/{id}:
     get:
       consumes:
       - application/json
@@ -86,7 +86,7 @@ paths:
       summary: Get user by ID
       tags:
       - users
-  /user/{id}/balance:
+  /api/user/{id}/balance:
     post:
       consumes:
       - application/json
@@ -113,7 +113,7 @@ paths:
       summary: Increase user balance with given ID
       tags:
       - users
-  /user/{id}/sms:
+  /api/user/{id}/sms:
     get:
       consumes:
       - application/json
@@ -152,7 +152,7 @@ paths:
       summary: Get a user messages by ID
       tags:
       - users
-  /user/{id}/sms/bulk:
+  /api/user/{id}/sms/bulk:
     post:
       consumes:
       - application/json
@@ -181,7 +181,7 @@ paths:
       summary: Send bulk SMS
       tags:
       - users
-  /user/{id}/sms/single:
+  /api/user/{id}/sms/single:
     post:
       consumes:
       - application/json
@@ -208,4 +208,32 @@ paths:
       summary: Send a single SMS
       tags:
       - users
+  /healthz:
+    get:
+      consumes:
+      - application/json
+      description: Application health check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+      summary: Application health check
+      tags:
+      - System
+  /metrics:
+    get:
+      consumes:
+      - application/json
+      description: Application metrics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+      summary: Application metrics
+      tags:
+      - System
 swagger: "2.0"

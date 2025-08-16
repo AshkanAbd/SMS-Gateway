@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/user/": {
+        "/api/user/": {
             "post": {
                 "description": "Creates a new user with the given name",
                 "consumes": [
@@ -49,7 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}": {
+        "/api/user/{id}": {
             "get": {
                 "description": "Returns a user with the given ID",
                 "consumes": [
@@ -81,7 +81,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}/balance": {
+        "/api/user/{id}/balance": {
             "post": {
                 "description": "Increase user balance with given ID",
                 "consumes": [
@@ -122,7 +122,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}/sms": {
+        "/api/user/{id}/sms": {
             "get": {
                 "description": "Returns a user messages with the given ID",
                 "consumes": [
@@ -179,7 +179,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}/sms/bulk": {
+        "/api/user/{id}/sms/bulk": {
             "post": {
                 "description": "Send bulk SMS with given data",
                 "consumes": [
@@ -223,7 +223,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/user/{id}/sms/single": {
+        "/api/user/{id}/sms/single": {
             "post": {
                 "description": "Send a single SMS with given data",
                 "consumes": [
@@ -260,6 +260,48 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/handlers.stdResponse"
                         }
+                    }
+                }
+            }
+        },
+        "/healthz": {
+            "get": {
+                "description": "Application health check",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Application health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "description": "Application metrics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Application metrics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
                     }
                 }
             }
