@@ -164,8 +164,8 @@ func (_c *MockISmsRepository_EnqueueMessages_Call) RunAndReturn(run func(ctx con
 }
 
 // GetMessagesByUserId provides a mock function for the type MockISmsRepository
-func (_mock *MockISmsRepository) GetMessagesByUserId(ctx context.Context, userId string) ([]models.Sms, error) {
-	ret := _mock.Called(ctx, userId)
+func (_mock *MockISmsRepository) GetMessagesByUserId(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error) {
+	ret := _mock.Called(ctx, userId, skip, limit, desc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMessagesByUserId")
@@ -173,18 +173,18 @@ func (_mock *MockISmsRepository) GetMessagesByUserId(ctx context.Context, userId
 
 	var r0 []models.Sms
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]models.Sms, error)); ok {
-		return returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, int, bool) ([]models.Sms, error)); ok {
+		return returnFunc(ctx, userId, skip, limit, desc)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []models.Sms); ok {
-		r0 = returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, int, bool) []models.Sms); ok {
+		r0 = returnFunc(ctx, userId, skip, limit, desc)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Sms)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int, int, bool) error); ok {
+		r1 = returnFunc(ctx, userId, skip, limit, desc)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -199,11 +199,14 @@ type MockISmsRepository_GetMessagesByUserId_Call struct {
 // GetMessagesByUserId is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userId string
-func (_e *MockISmsRepository_Expecter) GetMessagesByUserId(ctx interface{}, userId interface{}) *MockISmsRepository_GetMessagesByUserId_Call {
-	return &MockISmsRepository_GetMessagesByUserId_Call{Call: _e.mock.On("GetMessagesByUserId", ctx, userId)}
+//   - skip int
+//   - limit int
+//   - desc bool
+func (_e *MockISmsRepository_Expecter) GetMessagesByUserId(ctx interface{}, userId interface{}, skip interface{}, limit interface{}, desc interface{}) *MockISmsRepository_GetMessagesByUserId_Call {
+	return &MockISmsRepository_GetMessagesByUserId_Call{Call: _e.mock.On("GetMessagesByUserId", ctx, userId, skip, limit, desc)}
 }
 
-func (_c *MockISmsRepository_GetMessagesByUserId_Call) Run(run func(ctx context.Context, userId string)) *MockISmsRepository_GetMessagesByUserId_Call {
+func (_c *MockISmsRepository_GetMessagesByUserId_Call) Run(run func(ctx context.Context, userId string, skip int, limit int, desc bool)) *MockISmsRepository_GetMessagesByUserId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -213,9 +216,24 @@ func (_c *MockISmsRepository_GetMessagesByUserId_Call) Run(run func(ctx context.
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		var arg3 int
+		if args[3] != nil {
+			arg3 = args[3].(int)
+		}
+		var arg4 bool
+		if args[4] != nil {
+			arg4 = args[4].(bool)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -226,7 +244,7 @@ func (_c *MockISmsRepository_GetMessagesByUserId_Call) Return(smss []models.Sms,
 	return _c
 }
 
-func (_c *MockISmsRepository_GetMessagesByUserId_Call) RunAndReturn(run func(ctx context.Context, userId string) ([]models.Sms, error)) *MockISmsRepository_GetMessagesByUserId_Call {
+func (_c *MockISmsRepository_GetMessagesByUserId_Call) RunAndReturn(run func(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error)) *MockISmsRepository_GetMessagesByUserId_Call {
 	_c.Call.Return(run)
 	return _c
 }

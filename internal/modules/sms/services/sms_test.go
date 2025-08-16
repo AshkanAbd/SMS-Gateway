@@ -182,13 +182,13 @@ func TestSmsService_GetUserMessages(t *testing.T) {
 		}
 
 		mockRepo.EXPECT().
-			GetMessagesByUserId(ctx, inputUserId).
+			GetMessagesByUserId(ctx, inputUserId, 0, 10, true).
 			Return(expectedMsgs, nil).
 			Once()
 
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
-		actualMsgs, actualErr := service.GetUserSms(ctx, inputUserId)
+		actualMsgs, actualErr := service.GetUserSms(ctx, inputUserId, 0, 10, true)
 		assert.NoError(t, actualErr)
 		assert.Equal(t, len(expectedMsgs), len(actualMsgs))
 		for i := 0; i < len(expectedMsgs); i++ {
@@ -219,13 +219,13 @@ func TestSmsService_GetUserMessages(t *testing.T) {
 		mockRepo := mocks.NewMockISmsRepository(t)
 
 		mockRepo.EXPECT().
-			GetMessagesByUserId(ctx, inputUserId).
+			GetMessagesByUserId(ctx, inputUserId, 0, 10, true).
 			Return(nil, fmt.Errorf("error")).
 			Once()
 
 		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
 
-		actualMsgs, actualErr := service.GetUserSms(ctx, inputUserId)
+		actualMsgs, actualErr := service.GetUserSms(ctx, inputUserId, 0, 10, true)
 		assert.Error(t, actualErr)
 		assert.Nil(t, actualMsgs)
 	})

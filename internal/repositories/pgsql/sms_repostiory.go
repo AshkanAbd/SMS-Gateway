@@ -38,13 +38,21 @@ func (r *Repository) CreateScheduleMessages(ctx context.Context, msgs []models.S
 	return nil
 }
 
-func (r *Repository) GetMessagesByUserId(ctx context.Context, userId string) ([]models.Sms, error) {
+func (r *Repository) GetMessagesByUserId(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error) {
 	var ses []smsEntity
 
-	err := r.conn.WithContext(ctx).
+	query := r.conn.WithContext(ctx).
 		Where("user_id = ?", userId).
-		Order("created_at DESC, id DESC").
-		Find(&ses).Error
+		Limit(limit).
+		Offset(skip)
+
+	if desc {
+		query = query.Order("created_at DESC, id DESC")
+	} else {
+		query = query.Order("created_at ASC, id ASC")
+	}
+
+	err := query.Find(&ses).Error
 	if err != nil {
 		return nil, err
 	}

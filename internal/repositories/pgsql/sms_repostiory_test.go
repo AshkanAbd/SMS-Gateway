@@ -145,7 +145,7 @@ func TestRepository_CreateScheduleMessages(t *testing.T) {
 }
 
 func TestRepository_GetMessagesByUserId(t *testing.T) {
-	t.Run("should return user messages", func(t *testing.T) {
+	t.Run("should return user messages in desc", func(t *testing.T) {
 		conn, repo, err := initDB()
 		assert.NoError(t, err)
 
@@ -178,7 +178,7 @@ func TestRepository_GetMessagesByUserId(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		actualMsgs, actualErr := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		actualMsgs, actualErr := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, actualErr)
 		slices.Reverse(inputMsgs)
 		assert.Equal(t, len(inputMsgs), len(actualMsgs))
@@ -196,6 +196,165 @@ func TestRepository_GetMessagesByUserId(t *testing.T) {
 			assert.Equal(t, inputMsgs[i].Cost, actualMsgs[i].Cost)
 			assert.Equal(t, inputMsgs[i].Status, actualMsgs[i].Status)
 		}
+
+		err = cleanDB(conn)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return user messages in asc", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		ctx := context.Background()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456788",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 2",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		actualMsgs, actualErr := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, false)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, len(inputMsgs), len(actualMsgs))
+		for i := 0; i < len(inputMsgs); i++ {
+			assert.NotNil(t, actualMsgs[i].Entity)
+			assert.NotNil(t, actualMsgs[i].CreateDate)
+			assert.NotNil(t, actualMsgs[i].UpdateDate)
+			assert.NotNil(t, actualMsgs[i].ID)
+			assert.NotNil(t, actualMsgs[i].CreatedAt)
+			assert.NotNil(t, actualMsgs[i].UpdatedAt)
+
+			assert.Equal(t, inputMsgs[i].UserId, actualMsgs[i].UserId)
+			assert.Equal(t, inputMsgs[i].Content, actualMsgs[i].Content)
+			assert.Equal(t, inputMsgs[i].Receiver, actualMsgs[i].Receiver)
+			assert.Equal(t, inputMsgs[i].Cost, actualMsgs[i].Cost)
+			assert.Equal(t, inputMsgs[i].Status, actualMsgs[i].Status)
+		}
+
+		err = cleanDB(conn)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return limited count", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		ctx := context.Background()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456788",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 2",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		actualMsgs, actualErr := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 1, false)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, 1, len(actualMsgs))
+		assert.NotNil(t, actualMsgs[0].Entity)
+		assert.NotNil(t, actualMsgs[0].CreateDate)
+		assert.NotNil(t, actualMsgs[0].UpdateDate)
+		assert.NotNil(t, actualMsgs[0].ID)
+		assert.NotNil(t, actualMsgs[0].CreatedAt)
+		assert.NotNil(t, actualMsgs[0].UpdatedAt)
+		assert.Equal(t, inputMsgs[0].UserId, actualMsgs[0].UserId)
+		assert.Equal(t, inputMsgs[0].Content, actualMsgs[0].Content)
+		assert.Equal(t, inputMsgs[0].Receiver, actualMsgs[0].Receiver)
+		assert.Equal(t, inputMsgs[0].Cost, actualMsgs[0].Cost)
+		assert.Equal(t, inputMsgs[0].Status, actualMsgs[0].Status)
+
+		err = cleanDB(conn)
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return with skip", func(t *testing.T) {
+		conn, repo, err := initDB()
+		assert.NoError(t, err)
+
+		ctx := context.Background()
+
+		tmpUser := umodels.User{
+			Name:    "AshkanAbd",
+			Balance: 0,
+		}
+		createdUser, err := repo.CreateUser(ctx, tmpUser)
+		assert.NoError(t, err)
+
+		inputMsgs := []models.Sms{
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 1",
+				Receiver: "09123456788",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+			{
+				UserId:   createdUser.ID,
+				Content:  "Test Content 2",
+				Receiver: "09123456789",
+				Cost:     100,
+				Status:   models.StatusScheduled,
+			},
+		}
+
+		err = repo.CreateScheduleMessages(ctx, inputMsgs)
+		assert.NoError(t, err)
+
+		actualMsgs, actualErr := repo.GetMessagesByUserId(ctx, createdUser.ID, 1, 1, false)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, 1, len(actualMsgs))
+		assert.NotNil(t, actualMsgs[0].Entity)
+		assert.NotNil(t, actualMsgs[0].CreateDate)
+		assert.NotNil(t, actualMsgs[0].UpdateDate)
+		assert.NotNil(t, actualMsgs[0].ID)
+		assert.NotNil(t, actualMsgs[0].CreatedAt)
+		assert.NotNil(t, actualMsgs[0].UpdatedAt)
+		assert.Equal(t, inputMsgs[1].UserId, actualMsgs[0].UserId)
+		assert.Equal(t, inputMsgs[1].Content, actualMsgs[0].Content)
+		assert.Equal(t, inputMsgs[1].Receiver, actualMsgs[0].Receiver)
+		assert.Equal(t, inputMsgs[1].Cost, actualMsgs[0].Cost)
+		assert.Equal(t, inputMsgs[1].Status, actualMsgs[0].Status)
 
 		err = cleanDB(conn)
 		assert.NoError(t, err)
@@ -234,7 +393,7 @@ func TestRepository_SetMessageAsFailed(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -281,7 +440,7 @@ func TestRepository_SetMessageAsFailed(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -339,7 +498,7 @@ func TestRepository_SetMessageAsSent(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -386,7 +545,7 @@ func TestRepository_SetMessageAsSent(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -459,7 +618,7 @@ func TestRepository_EnqueueMessages(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -525,7 +684,7 @@ func TestRepository_EnqueueMessages(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -581,7 +740,7 @@ func TestRepository_RescheduledMessages(t *testing.T) {
 		err = repo.CreateScheduleMessages(ctx, inputMsgs)
 		assert.NoError(t, err)
 
-		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		userMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(inputMsgs), len(userMsgs))
 
@@ -591,7 +750,7 @@ func TestRepository_RescheduledMessages(t *testing.T) {
 		})
 		assert.NoError(t, actualErr)
 
-		actualMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID)
+		actualMsgs, err := repo.GetMessagesByUserId(ctx, createdUser.ID, 0, 10, true)
 		assert.NoError(t, err)
 		assert.Equal(t, len(actualMsgs), len(userMsgs))
 		for i := 0; i < len(userMsgs); i++ {

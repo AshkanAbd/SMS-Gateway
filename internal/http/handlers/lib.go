@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"github.com/AshkanAbd/arvancloud_sms_gateway/common"
 	"net/http"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/smsgateway"
@@ -19,6 +20,15 @@ type HttpHandler struct {
 
 func buildResponse(c *fiber.Ctx, status int, resp stdResponse) error {
 	return c.Status(status).JSON(resp)
+}
+
+func paginateFromQuery(c *fiber.Ctx) (int, int) {
+	pageStr := c.Query("page", "1")
+	pageSizeStr := c.Query("pageSize", "10")
+	page := common.ParseIntWithFallback(pageStr, 1)
+	pageSize := common.ParseIntWithFallback(pageSizeStr, 10)
+
+	return (page - 1) * pageSize, pageSize
 }
 
 func (h *HttpHandler) getValidationErrors(v any) validator.ValidationErrors {
@@ -87,8 +97,13 @@ func (h *HttpHandler) GetUserMessages(c *fiber.Ctx) error {
 	if userId == "" {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse("Invalid user id"))
 	}
+	skip, limit := paginateFromQuery(c)
+	order := c.Query("order", "desc")
+	if order != "desc" && order != "asc" {
+		order = "desc"
+	}
 
-	messages, err := h.gateway.GetUserMessages(c.Context(), userId)
+	messages, err := h.gateway.GetUserMessages(c.Context(), userId, skip, limit, order == "desc")
 	if err != nil {
 		return buildResponse(c, http.StatusInternalServerError, newMessageResponse(err.Error()))
 	}

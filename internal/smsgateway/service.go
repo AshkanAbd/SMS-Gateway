@@ -167,8 +167,8 @@ func (s *SmsGateway) GetUser(ctx context.Context, userId string) (usermodels.Use
 	return res, nil
 }
 
-func (s *SmsGateway) GetUserMessages(ctx context.Context, userId string) ([]smsmodels.Sms, error) {
-	userMsgs, err := s.sms.GetUserSms(ctx, userId)
+func (s *SmsGateway) GetUserMessages(ctx context.Context, userId string, skip int, limit int, desc bool) ([]smsmodels.Sms, error) {
+	userMsgs, err := s.sms.GetUserSms(ctx, userId, skip, limit, desc)
 	if err != nil {
 		logPkg.Error(err, "Failed to get user messages")
 		return nil, err

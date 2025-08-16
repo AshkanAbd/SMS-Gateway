@@ -166,13 +166,13 @@ func TestSmsGateway_GetUserMessages(t *testing.T) {
 		}
 
 		mockSms.EXPECT().
-			GetUserSms(ctx, userId).
+			GetUserSms(ctx, userId, 0, 10, true).
 			Return(expectedMsgs, nil).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualMsgs, actualErr := smsGateway.GetUserMessages(ctx, userId)
+		actualMsgs, actualErr := smsGateway.GetUserMessages(ctx, userId, 0, 10, true)
 		assert.NoError(t, actualErr)
 		assert.Equal(t, len(expectedMsgs), len(actualMsgs))
 		for i := 0; i < len(expectedMsgs); i++ {
@@ -198,13 +198,13 @@ func TestSmsGateway_GetUserMessages(t *testing.T) {
 		expectedErr := fmt.Errorf("some error")
 
 		mockSms.EXPECT().
-			GetUserSms(ctx, userId).
+			GetUserSms(ctx, userId, 0, 10, true).
 			Return(nil, expectedErr).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualMsgs, actualErr := smsGateway.GetUserMessages(ctx, userId)
+		actualMsgs, actualErr := smsGateway.GetUserMessages(ctx, userId, 0, 10, true)
 		assert.Error(t, actualErr)
 		assert.Equal(t, expectedErr, actualErr)
 		assert.Nil(t, actualMsgs)

@@ -105,8 +105,8 @@ func (_c *MockISmsService_EnqueueEarliest_Call) RunAndReturn(run func(ctx contex
 }
 
 // GetUserSms provides a mock function for the type MockISmsService
-func (_mock *MockISmsService) GetUserSms(ctx context.Context, userId string) ([]models.Sms, error) {
-	ret := _mock.Called(ctx, userId)
+func (_mock *MockISmsService) GetUserSms(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error) {
+	ret := _mock.Called(ctx, userId, skip, limit, desc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserSms")
@@ -114,18 +114,18 @@ func (_mock *MockISmsService) GetUserSms(ctx context.Context, userId string) ([]
 
 	var r0 []models.Sms
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]models.Sms, error)); ok {
-		return returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, int, bool) ([]models.Sms, error)); ok {
+		return returnFunc(ctx, userId, skip, limit, desc)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []models.Sms); ok {
-		r0 = returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, int, bool) []models.Sms); ok {
+		r0 = returnFunc(ctx, userId, skip, limit, desc)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Sms)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, userId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int, int, bool) error); ok {
+		r1 = returnFunc(ctx, userId, skip, limit, desc)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -140,11 +140,14 @@ type MockISmsService_GetUserSms_Call struct {
 // GetUserSms is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userId string
-func (_e *MockISmsService_Expecter) GetUserSms(ctx interface{}, userId interface{}) *MockISmsService_GetUserSms_Call {
-	return &MockISmsService_GetUserSms_Call{Call: _e.mock.On("GetUserSms", ctx, userId)}
+//   - skip int
+//   - limit int
+//   - desc bool
+func (_e *MockISmsService_Expecter) GetUserSms(ctx interface{}, userId interface{}, skip interface{}, limit interface{}, desc interface{}) *MockISmsService_GetUserSms_Call {
+	return &MockISmsService_GetUserSms_Call{Call: _e.mock.On("GetUserSms", ctx, userId, skip, limit, desc)}
 }
 
-func (_c *MockISmsService_GetUserSms_Call) Run(run func(ctx context.Context, userId string)) *MockISmsService_GetUserSms_Call {
+func (_c *MockISmsService_GetUserSms_Call) Run(run func(ctx context.Context, userId string, skip int, limit int, desc bool)) *MockISmsService_GetUserSms_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -154,9 +157,24 @@ func (_c *MockISmsService_GetUserSms_Call) Run(run func(ctx context.Context, use
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		var arg3 int
+		if args[3] != nil {
+			arg3 = args[3].(int)
+		}
+		var arg4 bool
+		if args[4] != nil {
+			arg4 = args[4].(bool)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -167,7 +185,7 @@ func (_c *MockISmsService_GetUserSms_Call) Return(smss []models.Sms, err error) 
 	return _c
 }
 
-func (_c *MockISmsService_GetUserSms_Call) RunAndReturn(run func(ctx context.Context, userId string) ([]models.Sms, error)) *MockISmsService_GetUserSms_Call {
+func (_c *MockISmsService_GetUserSms_Call) RunAndReturn(run func(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error)) *MockISmsService_GetUserSms_Call {
 	_c.Call.Return(run)
 	return _c
 }

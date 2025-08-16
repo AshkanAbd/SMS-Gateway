@@ -13,7 +13,7 @@ type SmsServiceConfig struct {
 
 type ISmsService interface {
 	ScheduleSms(ctx context.Context, userId string, msgs []models.Sms) error
-	GetUserSms(ctx context.Context, userId string) ([]models.Sms, error)
+	GetUserSms(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error)
 	EnqueueEarliest(ctx context.Context, count int) (int, error)
 	SetMessageAsFailed(ctx context.Context, id string) (models.Sms, error)
 	SetMessageAsSent(ctx context.Context, id string) (models.Sms, error)
@@ -54,8 +54,8 @@ func (s *SmsService) ScheduleSms(ctx context.Context, userId string, msgs []mode
 	return nil
 }
 
-func (s *SmsService) GetUserSms(ctx context.Context, userId string) ([]models.Sms, error) {
-	msgs, err := s.smsRepo.GetMessagesByUserId(ctx, userId)
+func (s *SmsService) GetUserSms(ctx context.Context, userId string, skip int, limit int, desc bool) ([]models.Sms, error) {
+	msgs, err := s.smsRepo.GetMessagesByUserId(ctx, userId, skip, limit, desc)
 	if err != nil {
 		return nil, err
 	}
