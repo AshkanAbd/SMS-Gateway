@@ -29,8 +29,8 @@ type Logger interface {
 	Debugf(format string, data ...any)
 	Info(msg string)
 	Infof(format string, data ...any)
-	Warning(msg string)
-	Warningf(format string, data ...any)
+	Warn(msg string)
+	Warnf(format string, data ...any)
 	Error(err error, msg string)
 	Errorf(err error, format string, data ...any)
 	Fatal(err error, msg string)
@@ -61,12 +61,12 @@ func Info(format string, data ...any) {
 	instance.Infof(format, data...)
 }
 
-func Warning(format string, data ...any) {
+func Warn(format string, data ...any) {
 	if len(data) == 0 {
-		instance.Warning(format)
+		instance.Warn(format)
 		return
 	}
-	instance.Warningf(format, data...)
+	instance.Warnf(format, data...)
 }
 
 func Error(err error, format string, data ...any) {
@@ -113,11 +113,11 @@ func (z *zeroLog) Info(msg string) {
 	z.logger.Info().Msg(msg)
 }
 
-func (z *zeroLog) Warningf(format string, data ...any) {
+func (z *zeroLog) Warnf(format string, data ...any) {
 	z.logger.Warn().Msgf(format, data...)
 }
 
-func (z *zeroLog) Warning(msg string) {
+func (z *zeroLog) Warn(msg string) {
 	z.logger.Warn().Msg(msg)
 }
 

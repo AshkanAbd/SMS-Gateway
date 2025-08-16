@@ -162,17 +162,9 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 		beforeUpdateUser, err := repo.GetUser(ctx, createdUser.ID)
 		assert.NoError(t, err)
 
-		actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
+		actualBalance, actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
 		assert.NoError(t, actualErr)
-
-		afterUpdateUser, err := repo.GetUser(ctx, createdUser.ID)
-		assert.NoError(t, err)
-
-		assert.Equal(t, beforeUpdateUser.ID, afterUpdateUser.ID)
-		assert.Equal(t, beforeUpdateUser.Name, afterUpdateUser.Name)
-		assert.Equal(t, beforeUpdateUser.Balance+inputAmount, afterUpdateUser.Balance)
-		assert.True(t, afterUpdateUser.CreatedAt.Equal(beforeUpdateUser.CreatedAt))
-		assert.True(t, afterUpdateUser.UpdatedAt.After(beforeUpdateUser.UpdatedAt))
+		assert.Equal(t, beforeUpdateUser.Balance+inputAmount, actualBalance)
 
 		err = cleanDB(conn)
 		assert.NoError(t, err)
@@ -184,9 +176,10 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 
 		ctx := context.Background()
 
-		actualErr := repo.UpdateUserBalance(ctx, "1", 100)
+		actualBalance, actualErr := repo.UpdateUserBalance(ctx, "1", 100)
 		assert.Error(t, actualErr)
 		assert.Equal(t, models.UserNotExistError, actualErr)
+		assert.Equal(t, int64(0), actualBalance)
 
 		err = cleanDB(conn)
 		assert.NoError(t, err)
@@ -207,9 +200,10 @@ func TestRepository_UpdateUserBalance(t *testing.T) {
 		createdUser, err := repo.CreateUser(ctx, inputUser)
 		assert.NoError(t, err)
 
-		actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
+		actualBalance, actualErr := repo.UpdateUserBalance(ctx, createdUser.ID, inputAmount)
 		assert.Error(t, actualErr)
 		assert.Equal(t, models.InsufficientBalanceError, actualErr)
+		assert.Equal(t, int64(0), actualBalance)
 
 		err = cleanDB(conn)
 		assert.NoError(t, err)

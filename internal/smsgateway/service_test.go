@@ -244,7 +244,7 @@ func TestSmsGateway_SendSingleMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost)).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		mockSms.EXPECT().
@@ -320,7 +320,7 @@ func TestSmsGateway_SendSingleMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost)).
-			Return(usermodels.InsufficientBalanceError).
+			Return(0, usermodels.InsufficientBalanceError).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -358,7 +358,7 @@ func TestSmsGateway_SendSingleMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost)).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		mockSms.EXPECT().
@@ -373,7 +373,7 @@ func TestSmsGateway_SendSingleMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			IncreaseUserBalance(ctx, userId, int64(cfg.MessageCost)).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -422,7 +422,7 @@ func TestSmsGateway_SendBulkMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost*len(msgs))).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		mockSms.EXPECT().
@@ -512,7 +512,7 @@ func TestSmsGateway_SendBulkMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost*len(msgs))).
-			Return(usermodels.InsufficientBalanceError).
+			Return(0, usermodels.InsufficientBalanceError).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -555,7 +555,7 @@ func TestSmsGateway_SendBulkMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			DecreaseUserBalance(ctx, userId, int64(cfg.MessageCost*len(msgs))).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		mockSms.EXPECT().
@@ -574,7 +574,7 @@ func TestSmsGateway_SendBulkMessage(t *testing.T) {
 
 		mockUser.EXPECT().
 			IncreaseUserBalance(ctx, userId, int64(cfg.MessageCost*len(msgs))).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -715,7 +715,7 @@ func TestSmsGateway_SendWorker(t *testing.T) {
 
 		mockUser.EXPECT().
 			IncreaseUserBalance(ctx, msg.UserId, int64(msg.Cost)).
-			Return(nil).
+			Return(0, nil).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -745,7 +745,7 @@ func TestSmsGateway_SendWorker(t *testing.T) {
 
 		mockUser.EXPECT().
 			IncreaseUserBalance(ctx, msg.UserId, int64(msg.Cost)).
-			Return(fmt.Errorf("some error")).
+			Return(0, fmt.Errorf("some error")).
 			Once()
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
@@ -787,5 +787,80 @@ func TestSmsGateway_SendWorker(t *testing.T) {
 
 		actualErr := smsGateway.SendWorker(ctx)
 		assert.NoError(t, actualErr)
+	})
+}
+
+func TestSmsGateway_IncreaseUserBalance(t *testing.T) {
+	cfg := smsgateway.Config{
+		EnqueueCount:    10,
+		SendWorkerCount: 1,
+		MessageCost:     100,
+	}
+
+	t.Run("should increase user balance", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockUser := usermocks.NewMockIUserService(t)
+		mockSms := smsmocks.NewMockISmsService(t)
+
+		inputUserId := "1"
+		inputAmount := int64(100)
+
+		mockUser.EXPECT().
+			IncreaseUserBalance(ctx, inputUserId, inputAmount).
+			Return(inputAmount, nil).
+			Once()
+
+		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
+
+		actualBalance, actualErr := smsGateway.IncreaseUserBalance(ctx, inputUserId, inputAmount)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, inputAmount, actualBalance)
+	})
+
+	t.Run("should return UserNotExistError when can not increase balance", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockUser := usermocks.NewMockIUserService(t)
+		mockSms := smsmocks.NewMockISmsService(t)
+
+		inputUserId := "1"
+		inputAmount := int64(100)
+
+		mockUser.EXPECT().
+			IncreaseUserBalance(ctx, inputUserId, inputAmount).
+			Return(0, usermodels.UserNotExistError).
+			Once()
+
+		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
+
+		actualBalance, actualErr := smsGateway.IncreaseUserBalance(ctx, inputUserId, inputAmount)
+		assert.Error(t, actualErr)
+		assert.Equal(t, usermodels.UserNotExistError, actualErr)
+		assert.Equal(t, int64(0), actualBalance)
+	})
+
+	t.Run("should return error when can not increase balance", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockUser := usermocks.NewMockIUserService(t)
+		mockSms := smsmocks.NewMockISmsService(t)
+
+		inputUserId := "1"
+		inputAmount := int64(100)
+
+		expectedErr := fmt.Errorf("some error")
+
+		mockUser.EXPECT().
+			IncreaseUserBalance(ctx, inputUserId, inputAmount).
+			Return(0, expectedErr).
+			Once()
+
+		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
+
+		actualBalance, actualErr := smsGateway.IncreaseUserBalance(ctx, inputUserId, inputAmount)
+		assert.Error(t, actualErr)
+		assert.Equal(t, expectedErr, actualErr)
+		assert.Equal(t, int64(0), actualBalance)
 	})
 }

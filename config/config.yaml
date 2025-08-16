@@ -1,13 +1,26 @@
+http:
+  address: "0.0.0.0:8000"
+
 sms_service:
-  worker_count: 1
-  peek_count: 10
+  queue_capacity: 100
 
 pgsql:
   dsn: "host=localhost user=postgres password=12345678 dbname=sms_gateway port=5432 sslmode=disable TimeZone=Asia/Tehran"
   migrations_path: "file://migrations/pgsql"
 
 redis:
-  address: 127.0.0.1:6379
+  address: "127.0.0.1:6379"
   password: 12345678
+
+redis_repo:
+  queue_db: 0
+  queue_name: messages
+  queue_timeout: 1s
+
+sms_gateway:
+  enqueue_count: 10
+  full_capacity_sleep_duration: 1s
+  send_worker_count: 4
+  message_cost: 100
 
 log_level: Debug

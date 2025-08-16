@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"gorm.io/gorm/clause"
 	"strings"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
@@ -43,9 +44,12 @@ func (r *Repository) GetUser(ctx context.Context, id string) (models.User, error
 	return toUser(ue), nil
 }
 
-func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount int64) error {
-	res := r.conn.WithContext(ctx).Model(&userEntity{}).
+func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount int64) (int64, error) {
+	var ue userEntity
+
+	res := r.conn.WithContext(ctx).Model(&ue).
 		Where("id = ?", id).
+		Clauses(clause.Returning{Columns: []clause.Column{{Name: "balance"}}}).
 		Updates(
 			map[string]any{
 				"balance":    gorm.Expr("balance + ?", amount),
@@ -55,14 +59,14 @@ func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount in
 
 	if res.Error != nil {
 		if strings.Contains(res.Error.Error(), "user_insufficient_balance") {
-			return models.InsufficientBalanceError
+			return 0, models.InsufficientBalanceError
 		}
-		return res.Error
+		return 0, res.Error
 	}
 
 	if res.RowsAffected == 0 {
-		return models.UserNotExistError
+		return 0, models.UserNotExistError
 	}
 
-	return nil
+	return ue.Balance, nil
 }

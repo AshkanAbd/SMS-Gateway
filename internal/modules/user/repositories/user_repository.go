@@ -9,5 +9,5 @@ import (
 type IUserRepository interface {
 	CreateUser(ctx context.Context, user models.User) (models.User, error)
 	GetUser(ctx context.Context, id string) (models.User, error)
-	UpdateUserBalance(ctx context.Context, id string, amount int64) error
+	UpdateUserBalance(ctx context.Context, id string, amount int64) (int64, error)
 }

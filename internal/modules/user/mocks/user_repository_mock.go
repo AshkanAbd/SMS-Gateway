@@ -171,20 +171,29 @@ func (_c *MockIUserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // UpdateUserBalance provides a mock function for the type MockIUserRepository
-func (_mock *MockIUserRepository) UpdateUserBalance(ctx context.Context, id string, amount int64) error {
+func (_mock *MockIUserRepository) UpdateUserBalance(ctx context.Context, id string, amount int64) (int64, error) {
 	ret := _mock.Called(ctx, id, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserBalance")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (int64, error)); ok {
+		return returnFunc(ctx, id, amount)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) int64); ok {
 		r0 = returnFunc(ctx, id, amount)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = returnFunc(ctx, id, amount)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockIUserRepository_UpdateUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUserBalance'
@@ -223,12 +232,12 @@ func (_c *MockIUserRepository_UpdateUserBalance_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockIUserRepository_UpdateUserBalance_Call) Return(err error) *MockIUserRepository_UpdateUserBalance_Call {
-	_c.Call.Return(err)
+func (_c *MockIUserRepository_UpdateUserBalance_Call) Return(n int64, err error) *MockIUserRepository_UpdateUserBalance_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockIUserRepository_UpdateUserBalance_Call) RunAndReturn(run func(ctx context.Context, id string, amount int64) error) *MockIUserRepository_UpdateUserBalance_Call {
+func (_c *MockIUserRepository_UpdateUserBalance_Call) RunAndReturn(run func(ctx context.Context, id string, amount int64) (int64, error)) *MockIUserRepository_UpdateUserBalance_Call {
 	_c.Call.Return(run)
 	return _c
 }

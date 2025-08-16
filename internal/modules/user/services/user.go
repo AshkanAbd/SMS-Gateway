@@ -10,8 +10,8 @@ import (
 type IUserService interface {
 	CreateUser(ctx context.Context, user models.User) (models.User, error)
 	GetUser(ctx context.Context, id string) (models.User, error)
-	IncreaseUserBalance(ctx context.Context, userId string, amount int64) error
-	DecreaseUserBalance(ctx context.Context, userId string, amount int64) error
+	IncreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error)
+	DecreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error)
 }
 
 type UserService struct {
@@ -44,30 +44,34 @@ func (u *UserService) GetUser(ctx context.Context, id string) (models.User, erro
 	return res, nil
 }
 
-func (u *UserService) IncreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+func (u *UserService) IncreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
 	if amount == 0 {
-		return nil
+		return 0, nil
 	}
 	if amount < 0 {
-		return models.InvalidBalanceError
-	}
-	if err := u.userRepo.UpdateUserBalance(ctx, userId, amount); err != nil {
-		return err
+		return 0, models.InvalidBalanceError
 	}
 
-	return nil
+	newBalance, err := u.userRepo.UpdateUserBalance(ctx, userId, amount)
+	if err != nil {
+		return 0, err
+	}
+
+	return newBalance, nil
 }
 
-func (u *UserService) DecreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+func (u *UserService) DecreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
 	if amount == 0 {
-		return nil
+		return 0, nil
 	}
 	if amount < 0 {
-		return models.InvalidBalanceError
-	}
-	if err := u.userRepo.UpdateUserBalance(ctx, userId, amount); err != nil {
-		return err
+		return 0, models.InvalidBalanceError
 	}
 
-	return nil
+	newBalance, err := u.userRepo.UpdateUserBalance(ctx, userId, amount)
+	if err != nil {
+		return 0, err
+	}
+
+	return newBalance, nil
 }

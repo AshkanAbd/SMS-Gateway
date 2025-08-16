@@ -105,20 +105,29 @@ func (_c *MockIUserService_CreateUser_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // DecreaseUserBalance provides a mock function for the type MockIUserService
-func (_mock *MockIUserService) DecreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+func (_mock *MockIUserService) DecreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
 	ret := _mock.Called(ctx, userId, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DecreaseUserBalance")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (int64, error)); ok {
+		return returnFunc(ctx, userId, amount)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) int64); ok {
 		r0 = returnFunc(ctx, userId, amount)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = returnFunc(ctx, userId, amount)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockIUserService_DecreaseUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DecreaseUserBalance'
@@ -157,12 +166,12 @@ func (_c *MockIUserService_DecreaseUserBalance_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockIUserService_DecreaseUserBalance_Call) Return(err error) *MockIUserService_DecreaseUserBalance_Call {
-	_c.Call.Return(err)
+func (_c *MockIUserService_DecreaseUserBalance_Call) Return(n int64, err error) *MockIUserService_DecreaseUserBalance_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockIUserService_DecreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, userId string, amount int64) error) *MockIUserService_DecreaseUserBalance_Call {
+func (_c *MockIUserService_DecreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, userId string, amount int64) (int64, error)) *MockIUserService_DecreaseUserBalance_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -234,20 +243,29 @@ func (_c *MockIUserService_GetUser_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // IncreaseUserBalance provides a mock function for the type MockIUserService
-func (_mock *MockIUserService) IncreaseUserBalance(ctx context.Context, userId string, amount int64) error {
+func (_mock *MockIUserService) IncreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
 	ret := _mock.Called(ctx, userId, amount)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IncreaseUserBalance")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) (int64, error)); ok {
+		return returnFunc(ctx, userId, amount)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int64) int64); ok {
 		r0 = returnFunc(ctx, userId, amount)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int64)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, int64) error); ok {
+		r1 = returnFunc(ctx, userId, amount)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockIUserService_IncreaseUserBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncreaseUserBalance'
@@ -286,12 +304,12 @@ func (_c *MockIUserService_IncreaseUserBalance_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockIUserService_IncreaseUserBalance_Call) Return(err error) *MockIUserService_IncreaseUserBalance_Call {
-	_c.Call.Return(err)
+func (_c *MockIUserService_IncreaseUserBalance_Call) Return(n int64, err error) *MockIUserService_IncreaseUserBalance_Call {
+	_c.Call.Return(n, err)
 	return _c
 }
 
-func (_c *MockIUserService_IncreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, userId string, amount int64) error) *MockIUserService_IncreaseUserBalance_Call {
+func (_c *MockIUserService_IncreaseUserBalance_Call) RunAndReturn(run func(ctx context.Context, userId string, amount int64) (int64, error)) *MockIUserService_IncreaseUserBalance_Call {
 	_c.Call.Return(run)
 	return _c
 }

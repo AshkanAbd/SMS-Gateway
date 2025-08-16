@@ -99,7 +99,7 @@ func (s *SmsGateway) SendWorker(ctx context.Context) error {
 	}
 
 	if msg.Status == smsmodels.StatusFailed {
-		if err := s.user.IncreaseUserBalance(ctx, msg.UserId, int64(msg.Cost)); err != nil {
+		if _, err := s.user.IncreaseUserBalance(ctx, msg.UserId, int64(msg.Cost)); err != nil {
 			logPkg.Error(err, "Failed to increase user balance")
 		}
 	}
@@ -176,7 +176,7 @@ func (s *SmsGateway) SendSingleMessage(ctx context.Context, userId string, sms s
 		Receiver: sms.Receiver,
 		Cost:     s.cfg.MessageCost,
 	}
-	if decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
+	if _, decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
 		logPkg.Error(decreaseErr, "Failed to decrease user balance")
 		return decreaseErr
 	}
@@ -184,7 +184,7 @@ func (s *SmsGateway) SendSingleMessage(ctx context.Context, userId string, sms s
 	if scheduleErr := s.sms.ScheduleSms(ctx, userId, []smsmodels.Sms{msg}); scheduleErr != nil {
 		logPkg.Error(scheduleErr, "Failed to schedule sms")
 
-		if increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
+		if _, increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
 			logPkg.Error(increaseErr, "Failed to increase user balance")
 		}
 
@@ -214,7 +214,7 @@ func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []s
 			Cost:     s.cfg.MessageCost,
 		}
 	}
-	if decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
+	if _, decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
 		logPkg.Error(decreaseErr, "Failed to decrease user balance")
 		return decreaseErr
 	}
@@ -222,7 +222,7 @@ func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []s
 	if scheduleErr := s.sms.ScheduleSms(ctx, userId, msgs); scheduleErr != nil {
 		logPkg.Error(scheduleErr, "Failed to schedule sms")
 
-		if increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
+		if _, increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
 			logPkg.Error(increaseErr, "Failed to increase user balance")
 		}
 
@@ -230,4 +230,14 @@ func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []s
 	}
 
 	return nil
+}
+
+func (s *SmsGateway) IncreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
+	newBalance, err := s.user.IncreaseUserBalance(ctx, userId, amount)
+	if err != nil {
+		logPkg.Error(err, "Failed to increase user balance")
+		return 0, err
+	}
+
+	return newBalance, nil
 }
