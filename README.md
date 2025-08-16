@@ -6,6 +6,19 @@
 - PostgresSQL
 - Redis
 
+#### Architecture:
+
+- Clean Architecture (Hexagonal)
+
+#### Design
+
+- Domain Driven Design
+
+#### Domain:
+
+- **User**: Responsible for actions on `User` entity
+- **Sms**: Responsible for action on `Sms` entity
+
 ### Endpoints:
 
 | Method | Path                        | Description                |
@@ -21,3 +34,6 @@
 | POST   | `/api/user/{id}/sms/single` | Sent single SMS            |
 | POST   | `/api/user/{id}/sms/bulk`   | Send bulk SMS              |
 
+### Send SMS Flow
+
+<img src="./send-flow.png">
