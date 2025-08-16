@@ -2,6 +2,7 @@ package pgsql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -47,25 +48,35 @@ func (r *Repository) GetUser(ctx context.Context, id string) (models.User, error
 func (r *Repository) UpdateUserBalance(ctx context.Context, id string, amount int64) (int64, error) {
 	var ue userEntity
 
-	res := r.conn.WithContext(ctx).Model(&ue).
-		Where("id = ?", id).
-		Clauses(clause.Returning{Columns: []clause.Column{{Name: "balance"}}}).
-		Updates(
-			map[string]any{
-				"balance":    gorm.Expr("balance + ?", amount),
-				"updated_at": gorm.Expr("now()"),
-			},
-		)
+	err := r.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.WithContext(ctx).Model(&ue).
+			Where("id = ?", id).
+			Clauses(clause.Returning{Columns: []clause.Column{{Name: "balance"}}}).
+			Updates(
+				map[string]any{
+					"balance":    gorm.Expr("balance + ?", amount),
+					"updated_at": gorm.Expr("now()"),
+				},
+			)
 
-	if res.Error != nil {
-		if strings.Contains(res.Error.Error(), "user_insufficient_balance") {
+		if res.Error != nil {
+			return res.Error
+		}
+
+		if res.RowsAffected == 0 {
+			return models.UserNotExistError
+		}
+
+		return nil
+	}, &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	})
+
+	if err != nil {
+		if strings.Contains(err.Error(), "user_insufficient_balance") {
 			return 0, models.InsufficientBalanceError
 		}
-		return 0, res.Error
-	}
-
-	if res.RowsAffected == 0 {
-		return 0, models.UserNotExistError
+		return 0, err
 	}
 
 	return ue.Balance, nil

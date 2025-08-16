@@ -2,6 +2,7 @@ package pgsql
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"time"
 
@@ -114,27 +115,37 @@ func (r *Repository) SetMessageAsSent(ctx context.Context, id string) (models.Sm
 func (r *Repository) EnqueueMessages(ctx context.Context, count int) ([]models.Sms, error) {
 	var ses []smsEntity
 
-	res := r.conn.WithContext(ctx).
-		Model(&ses).
-		Where("id IN (?)",
-			r.conn.WithContext(ctx).
-				Model(&smsEntity{}).
-				Select("id").
-				Where("status", models.StatusScheduled).
-				Order("created_at ASC, id ASC").
-				Limit(count).
-				Clauses(clause.Locking{
-					Strength: "UPDATE",
-					Options:  "SKIP LOCKED",
-				}),
-		).Clauses(clause.Returning{}).
-		Updates(map[string]any{
-			"status":     models.StatusEnqueued,
-			"updated_at": time.Now(),
-		})
+	err := r.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.WithContext(ctx).
+			Model(&ses).
+			Where("id IN (?)",
+				tx.WithContext(ctx).
+					Model(&smsEntity{}).
+					Select("id").
+					Where("status", models.StatusScheduled).
+					Order("created_at ASC, id ASC").
+					Limit(count).
+					Clauses(clause.Locking{
+						Strength: "UPDATE",
+						Options:  "SKIP LOCKED",
+					}),
+			).Clauses(clause.Returning{}).
+			Updates(map[string]any{
+				"status":     models.StatusEnqueued,
+				"updated_at": time.Now(),
+			})
 
-	if res.Error != nil {
-		return nil, res.Error
+		if res.Error != nil {
+			return res.Error
+		}
+
+		return nil
+	}, &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	ss := make([]models.Sms, len(ses))
@@ -146,17 +157,27 @@ func (r *Repository) EnqueueMessages(ctx context.Context, count int) ([]models.S
 }
 
 func (r *Repository) RescheduledMessages(ctx context.Context, ids []string) error {
-	res := r.conn.WithContext(ctx).
-		Model(&smsEntity{}).
-		Clauses(clause.Returning{}).
-		Where("id IN ?", ids).
-		Updates(map[string]any{
-			"status":     models.StatusScheduled,
-			"updated_at": time.Now(),
-		})
+	err := r.conn.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.WithContext(ctx).
+			Model(&smsEntity{}).
+			Clauses(clause.Returning{}).
+			Where("id IN ?", ids).
+			Updates(map[string]any{
+				"status":     models.StatusScheduled,
+				"updated_at": time.Now(),
+			})
 
-	if res.Error != nil {
-		return res.Error
+		if res.Error != nil {
+			return res.Error
+		}
+
+		return nil
+	}, &sql.TxOptions{
+		Isolation: sql.LevelRepeatableRead,
+	})
+
+	if err != nil {
+		return err
 	}
 
 	return nil
