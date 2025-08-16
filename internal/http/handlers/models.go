@@ -27,7 +27,7 @@ func newObjectResponse(v any) stdResponse {
 }
 
 type createUserRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=3,max=250"`
 }
 
 func (c createUserRequest) toUser() usermodels.User {
@@ -105,8 +105,8 @@ func fromSmsStatus(status smsmodels.SmsStatus) string {
 }
 
 type smsRequest struct {
-	Content  string `json:"content"`
-	Receiver string `json:"receiver"`
+	Content  string `json:"content" validate:"required,min=3,max=1000"`
+	Receiver string `json:"receiver" validate:"required,number,min=10,max=20"`
 }
 
 func (r smsRequest) toSms() smsmodels.Sms {
@@ -117,5 +117,5 @@ func (r smsRequest) toSms() smsmodels.Sms {
 }
 
 type increaseBalanceRequest struct {
-	Amount int64 `json:"balance"`
+	Amount int64 `json:"balance" validate:"required,gt=0,lt=1000000"`
 }

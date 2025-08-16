@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/smsgateway"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 
 	smsmodels "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
@@ -12,16 +13,32 @@ import (
 )
 
 type HttpHandler struct {
-	gateway *smsgateway.SmsGateway
+	gateway  *smsgateway.SmsGateway
+	validate *validator.Validate
 }
 
 func buildResponse(c *fiber.Ctx, status int, resp stdResponse) error {
 	return c.Status(status).JSON(resp)
 }
 
+func (h *HttpHandler) getValidationErrors(v any) validator.ValidationErrors {
+	validationRes := h.validate.Struct(v)
+	if validationRes != nil {
+		var errs validator.ValidationErrors
+		if errors.As(validationRes, &errs) {
+			return errs
+		}
+	}
+
+	return nil
+}
+
 func NewHttpHandler(gateway *smsgateway.SmsGateway) *HttpHandler {
+	validate := validator.New()
+
 	return &HttpHandler{
-		gateway: gateway,
+		gateway:  gateway,
+		validate: validate,
 	}
 }
 
@@ -29,6 +46,10 @@ func (h *HttpHandler) CreateUser(c *fiber.Ctx) error {
 	var req createUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse(err.Error()))
+	}
+	validationErrs := h.getValidationErrors(req)
+	if len(validationErrs) > 0 {
+		return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
 	}
 
 	createdUser, err := h.gateway.CreateUser(c.Context(), req.toUser())
@@ -90,6 +111,10 @@ func (h *HttpHandler) SendSingleMessage(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse(err.Error()))
 	}
+	validationErrs := h.getValidationErrors(req)
+	if len(validationErrs) > 0 {
+		return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
+	}
 
 	err := h.gateway.SendSingleMessage(c.Context(), userId, req.toSms())
 	if err != nil {
@@ -115,6 +140,10 @@ func (h *HttpHandler) SendBulkMessage(c *fiber.Ctx) error {
 	var req []smsRequest
 	if err := c.BodyParser(&req); err != nil {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse(err.Error()))
+	}
+	validationErrs := h.getValidationErrors(req)
+	if len(validationErrs) > 0 {
+		return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
 	}
 
 	ss := make([]smsmodels.Sms, len(req))
@@ -145,6 +174,10 @@ func (h *HttpHandler) IncreaseUserBalance(c *fiber.Ctx) error {
 	var req increaseBalanceRequest
 	if err := c.BodyParser(&req); err != nil {
 		return buildResponse(c, http.StatusBadRequest, newMessageResponse(err.Error()))
+	}
+	validationErrs := h.getValidationErrors(req)
+	if len(validationErrs) > 0 {
+		return buildResponse(c, http.StatusBadRequest, newMessageResponse(validationErrs.Error()))
 	}
 
 	newBalance, err := h.gateway.IncreaseUserBalance(c.Context(), userId, req.Amount)
