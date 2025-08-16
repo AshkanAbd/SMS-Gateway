@@ -15,6 +15,7 @@ import (
 type Config struct {
 	EnqueueCount              int           `mapstructure:"enqueue_count"`
 	FullCapacitySleepDuration time.Duration `mapstructure:"full_capacity_sleep_duration"`
+	EmptyEnqueueSleepDuration time.Duration `mapstructure:"empty_enqueue_sleep_duration"`
 	SendWorkerCount           int           `mapstructure:"send_worker_count"`
 	MessageCost               int           `mapstructure:"message_cost"`
 }
@@ -37,28 +38,30 @@ func NewSmsGateway(
 	}
 }
 
-func (s *SmsGateway) EnqueueWorker(ctx context.Context) error {
+func (s *SmsGateway) EnqueueWorker(ctx context.Context) (int, error) {
 	enqueued, err := s.sms.EnqueueEarliest(ctx, s.cfg.EnqueueCount)
 	if err != nil {
 		logPkg.Error(err, "Failed to enqueue sms")
 
 		if errors.Is(err, smsmodels.InvalidQueueError) {
-			return err
+			return 0, err
 		}
 
 		if errors.Is(err, smsmodels.NoCapacityInQueueError) {
-			return err
+			return 0, err
 		}
 
-		return nil
+		return 0, nil
 	}
 	logPkg.Debug("Enqueued sms: %d", enqueued)
 
-	return nil
+	return enqueued, nil
 }
 
-func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) {
+func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) <-chan error {
+	errCh := make(chan error, 1)
 	go func() {
+		logPkg.Debug("Starting enqueue worker...")
 		var stopErr error
 		for {
 			stopErr = ctx.Err()
@@ -67,7 +70,7 @@ func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) {
 				break
 			}
 
-			stopErr = s.EnqueueWorker(ctx)
+			enqueued, stopErr := s.EnqueueWorker(ctx)
 			if stopErr != nil {
 				if errors.Is(stopErr, smsmodels.NoCapacityInQueueError) {
 					time.Sleep(s.cfg.FullCapacitySleepDuration)
@@ -76,10 +79,18 @@ func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) {
 
 				break
 			}
+			if enqueued == 0 {
+				time.Sleep(s.cfg.EmptyEnqueueSleepDuration)
+			}
 		}
 
 		logPkg.Error(stopErr, "Enqueue worker is shutting down")
+		if errCh != nil {
+			errCh <- stopErr
+		}
 	}()
+
+	return errCh
 }
 
 func (s *SmsGateway) SendWorker(ctx context.Context) error {
@@ -107,7 +118,9 @@ func (s *SmsGateway) SendWorker(ctx context.Context) error {
 	return nil
 }
 
-func (s *SmsGateway) StartSendWorkers(ctx context.Context) {
+func (s *SmsGateway) StartSendWorkers(ctx context.Context) <-chan error {
+	logPkg.Debug("Starting send workers...")
+	errCh := make(chan error, s.cfg.SendWorkerCount)
 	for range s.cfg.SendWorkerCount {
 		go func() {
 			var stopErr error
@@ -125,8 +138,13 @@ func (s *SmsGateway) StartSendWorkers(ctx context.Context) {
 			}
 
 			logPkg.Error(stopErr, "Send worker is shutting down")
+			if errCh != nil {
+				errCh <- stopErr
+			}
 		}()
 	}
+
+	return errCh
 }
 
 func (s *SmsGateway) CreateUser(ctx context.Context, user usermodels.User) (usermodels.User, error) {

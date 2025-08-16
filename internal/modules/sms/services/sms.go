@@ -77,6 +77,10 @@ func (s *SmsService) EnqueueEarliest(ctx context.Context, count int) (int, error
 		return 0, err
 	}
 
+	if len(enqueuedMsgs) == 0 {
+		return 0, nil
+	}
+
 	if err := s.smsQueue.Enqueue(ctx, enqueuedMsgs); err != nil {
 		ids := make([]string, len(enqueuedMsgs))
 		for i := range enqueuedMsgs {

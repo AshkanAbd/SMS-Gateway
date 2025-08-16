@@ -598,6 +598,8 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 		mockUser := usermocks.NewMockIUserService(t)
 		mockSms := smsmocks.NewMockISmsService(t)
 
+		expectedEnqueue := 10
+
 		mockSms.EXPECT().
 			EnqueueEarliest(ctx, cfg.EnqueueCount).
 			Return(10, nil).
@@ -605,8 +607,9 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualErr := smsGateway.EnqueueWorker(ctx)
+		actualEnqueue, actualErr := smsGateway.EnqueueWorker(ctx)
 		assert.NoError(t, actualErr)
+		assert.Equal(t, expectedEnqueue, actualEnqueue)
 	})
 
 	t.Run("should return InvalidQueueError when queue is not valid", func(t *testing.T) {
@@ -622,9 +625,10 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualErr := smsGateway.EnqueueWorker(ctx)
+		actualEnqueue, actualErr := smsGateway.EnqueueWorker(ctx)
 		assert.Error(t, actualErr)
 		assert.Equal(t, smsmodels.InvalidQueueError, actualErr)
+		assert.Equal(t, 0, actualEnqueue)
 	})
 
 	t.Run("should return NoCapacityInQueueError when queue is full", func(t *testing.T) {
@@ -640,9 +644,10 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualErr := smsGateway.EnqueueWorker(ctx)
+		actualEnqueue, actualErr := smsGateway.EnqueueWorker(ctx)
 		assert.Error(t, actualErr)
 		assert.Equal(t, smsmodels.NoCapacityInQueueError, actualErr)
+		assert.Equal(t, 0, actualEnqueue)
 	})
 
 	t.Run("should return nil when other errors occurred", func(t *testing.T) {
@@ -658,8 +663,9 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 
 		smsGateway := smsgateway.NewSmsGateway(cfg, mockUser, mockSms)
 
-		actualErr := smsGateway.EnqueueWorker(ctx)
+		actualEnqueue, actualErr := smsGateway.EnqueueWorker(ctx)
 		assert.NoError(t, actualErr)
+		assert.Equal(t, 0, actualEnqueue)
 	})
 }
 

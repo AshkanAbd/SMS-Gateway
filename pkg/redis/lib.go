@@ -4,6 +4,8 @@ import (
 	"sync"
 
 	"github.com/redis/go-redis/v9"
+
+	pkgLog "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
 )
 
 type Config struct {
@@ -26,11 +28,13 @@ func NewConnector(cfg Config) *Connector {
 }
 
 func (c *Connector) initClient(db int) {
+	pkgLog.Info("Connecting to redis pool db %d", db)
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.cfg.Addr,
 		Password: c.cfg.Password,
 		DB:       db,
 	})
+	pkgLog.Info("Connected to redis pool db %d", db)
 
 	c.clientPool[db] = client
 }
@@ -53,6 +57,7 @@ func (c *Connector) Close() error {
 	defer c.m.Unlock()
 
 	for db, client := range c.clientPool {
+		pkgLog.Info("closing redis connection for db %d", db)
 		if err := client.Close(); err != nil {
 			return err
 		}

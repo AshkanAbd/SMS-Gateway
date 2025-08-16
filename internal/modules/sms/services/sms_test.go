@@ -556,6 +556,30 @@ func TestSmsService_EnqueueEarliest(t *testing.T) {
 		assert.Equal(t, models.NoCapacityInQueueError, actualErr)
 		assert.Equal(t, 0, actualCount)
 	})
+
+	t.Run("should return 0 with no error when no message to enqueue", func(t *testing.T) {
+		ctx := context.Background()
+
+		mockQueue := mocks.NewMockISmsQueue(t)
+		mockSender := mocks.NewMockISmsSender(t)
+		mockRepo := mocks.NewMockISmsRepository(t)
+
+		mockQueue.EXPECT().
+			GetLength(ctx).
+			Return(1, nil).
+			Once()
+
+		mockRepo.EXPECT().
+			EnqueueMessages(ctx, 1).
+			Return([]models.Sms{}, nil).
+			Once()
+
+		service := services.NewSmsService(cfg, mockRepo, mockSender, mockQueue)
+
+		actualCount, actualErr := service.EnqueueEarliest(ctx, 1)
+		assert.NoError(t, actualErr)
+		assert.Equal(t, 0, actualCount)
+	})
 }
 
 func TestSmsService_SetMessageAsFailed(t *testing.T) {
