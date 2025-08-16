@@ -34,8 +34,6 @@ func init() {
 	pkgLog.SetLogLevel("Trace")
 	Config = *pkgCfg.Load[config.AppConfig]()
 	pkgLog.SetLogLevel(Config.LogLevel)
-
-	pkgLog.Info("Config is %#v", Config)
 }
 
 func closer(c io.Closer) {

@@ -15,6 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/app ./app
 COPY --from=builder /app/config/config.yaml ./config.yaml
+COPY --from=builder /app/migrations/pgsql/* ./migrations/pgsql/
 
 RUN apk add curl
 

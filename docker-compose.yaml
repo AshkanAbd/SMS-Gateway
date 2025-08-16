@@ -1,0 +1,40 @@
+services:
+  sms-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sms-gateway
+    depends_on:
+      - redis
+      - pgsql
+    ports:
+      - '8000:8000'
+    command: sh -c 'sleep 3 ; /app/app'
+    healthcheck:
+      test: "curl -f http://localhost:8000/healthz"
+      interval: 10s
+    environment:
+      REDIS_ADDRESS: "redis:6379"
+      PGSQL_DSN: "host=pgsql user=postgres password=12345678 dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Tehran"
+  
+  redis:
+    image: redis/redis-stack-server:7.2.0-v18
+    container_name: redis
+    volumes:
+      - redis_data:/data
+    environment:
+      REDIS_ARGS: "--requirepass 12345678"
+
+  pgsql:
+    image: postgres:17.6-alpine
+    container_name: psql
+    volumes:
+      - pgsql_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345678
+      - TZ=Asia/Tehran
+
+volumes:
+  pgsql_data:
+  redis_data:
