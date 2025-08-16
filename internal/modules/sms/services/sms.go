@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/repositories"
@@ -152,6 +153,9 @@ func (s *SmsService) SendFromQueue(ctx context.Context) (models.Sms, error) {
 	pkgLog.Debug("poping message from queue")
 	msg, err := s.smsQueue.Pop(ctx)
 	if err != nil {
+		if errors.Is(err, models.EmptyQueueError) {
+			return models.Sms{}, err
+		}
 		pkgLog.Error(err, "failed to pop message from queue")
 		return models.Sms{}, err
 	}

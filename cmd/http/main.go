@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -99,9 +100,30 @@ func main() {
 	api.Post("/user/:id/balance", httpHandler.IncreaseUserBalance)
 	api.Post("/user/:id/sms/single", httpHandler.SendSingleMessage)
 	api.Post("/user/:id/sms/bulk", httpHandler.SendBulkMessage)
+	app.Get("/metrics", handlers.Metrics())
 
-	enqueueWorkerErrCh := gateway.StartEnqueueWorker(appCtx)
-	sendWorkerErrCh := gateway.StartSendWorkers(appCtx)
+	wg := sync.WaitGroup{}
+	defer wg.Wait()
+
+	enqueueWorkerErrCh := make(chan error, 1)
+	go func() {
+		wg.Add(1)
+		if err := gateway.StartEnqueueWorker(appCtx); err != nil {
+			enqueueWorkerErrCh <- err
+		}
+		wg.Done()
+	}()
+
+	sendWorkerErrCh := make(chan error, Config.SendWorkerCount)
+	for range Config.SendWorkerCount {
+		go func() {
+			wg.Add(1)
+			if err := gateway.StartSendWorkers(appCtx); err != nil {
+				sendWorkerErrCh <- err
+			}
+			wg.Done()
+		}()
+	}
 	httpErrCh := make(chan error, 1)
 
 	app.Get("/healthz", handlers.HealthCheck([]<-chan error{
@@ -110,14 +132,14 @@ func main() {
 		httpErrCh,
 	}))
 
-	app.Get("/metrics", handlers.Metrics())
-
 	go func() {
+		wg.Add(1)
 		pkgLog.Debug("Starting http server on %s", Config.HttpConfig.Address)
 		if err := app.Listen(Config.HttpConfig.Address); err != nil {
 			httpErrCh <- err
 			pkgLog.Error(err, "Error on starting http server")
 		}
+		wg.Done()
 	}()
 
 	signalForExit := make(chan os.Signal, 1)
@@ -134,5 +156,6 @@ func main() {
 	if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
 		pkgLog.Error(err, "Error on shutdown http server after 5 seconds")
 	}
+	pkgLog.Info("Http server shutdown successfully")
 	cancel()
 }

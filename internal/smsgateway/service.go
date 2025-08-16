@@ -9,14 +9,13 @@ import (
 	smssrv "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/services"
 	usermodels "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/models"
 	usersrv "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/services"
-	logPkg "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
+	pkgLog "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
 )
 
 type Config struct {
 	EnqueueCount              int           `mapstructure:"enqueue_count"`
 	FullCapacitySleepDuration time.Duration `mapstructure:"full_capacity_sleep_duration"`
 	EmptyEnqueueSleepDuration time.Duration `mapstructure:"empty_enqueue_sleep_duration"`
-	SendWorkerCount           int           `mapstructure:"send_worker_count"`
 	MessageCost               int           `mapstructure:"message_cost"`
 }
 
@@ -39,9 +38,15 @@ func NewSmsGateway(
 }
 
 func (s *SmsGateway) EnqueueWorker(ctx context.Context) (int, error) {
-	enqueued, err := s.sms.EnqueueEarliest(ctx, s.cfg.EnqueueCount)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "enqueue worker context canceled")
+		return 0, err
+	}
+
+	newCtx := context.Background()
+	enqueued, err := s.sms.EnqueueEarliest(newCtx, s.cfg.EnqueueCount)
 	if err != nil {
-		logPkg.Error(err, "Failed to enqueue sms")
+		pkgLog.Error(err, "failed to enqueue sms")
 
 		if errors.Is(err, smsmodels.InvalidQueueError) {
 			return 0, err
@@ -53,104 +58,99 @@ func (s *SmsGateway) EnqueueWorker(ctx context.Context) (int, error) {
 
 		return 0, nil
 	}
-	logPkg.Debug("Enqueued sms: %d", enqueued)
+	pkgLog.Debug("enqueued sms: %d", enqueued)
 
 	return enqueued, nil
 }
 
-func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) <-chan error {
-	errCh := make(chan error, 1)
-	go func() {
-		logPkg.Debug("Starting enqueue worker...")
-		var stopErr error
-		for {
-			stopErr = ctx.Err()
-			if stopErr != nil {
-				logPkg.Error(stopErr, "Context error")
-				break
-			}
-
-			enqueued, stopErr := s.EnqueueWorker(ctx)
-			if stopErr != nil {
-				if errors.Is(stopErr, smsmodels.NoCapacityInQueueError) {
-					time.Sleep(s.cfg.FullCapacitySleepDuration)
-					continue
-				}
-
-				break
-			}
-			if enqueued == 0 {
-				time.Sleep(s.cfg.EmptyEnqueueSleepDuration)
-			}
+func (s *SmsGateway) StartEnqueueWorker(ctx context.Context) error {
+	pkgLog.Debug("starting enqueue worker...")
+	var stopErr error
+	for {
+		stopErr = ctx.Err()
+		if stopErr != nil {
+			pkgLog.Error(stopErr, "enqueue worker context canceled")
+			break
 		}
 
-		logPkg.Error(stopErr, "Enqueue worker is shutting down")
-		if errCh != nil {
-			errCh <- stopErr
-		}
-	}()
+		enqueued, stopErr := s.EnqueueWorker(ctx)
+		if stopErr != nil {
+			if errors.Is(stopErr, smsmodels.NoCapacityInQueueError) {
+				time.Sleep(s.cfg.FullCapacitySleepDuration)
+				continue
+			}
 
-	return errCh
+			break
+		}
+		if enqueued == 0 {
+			time.Sleep(s.cfg.EmptyEnqueueSleepDuration)
+		}
+	}
+
+	pkgLog.Error(stopErr, "enqueue worker shutdown successfully")
+	return stopErr
 }
 
 func (s *SmsGateway) SendWorker(ctx context.Context) error {
-	msg, err := s.sms.SendFromQueue(ctx)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "send worker context canceled")
+		return err
+	}
+
+	newCtx := context.Background()
+	msg, err := s.sms.SendFromQueue(newCtx)
 	if err != nil {
-		logPkg.Error(err, "Failed to enqueue sms")
+		if errors.Is(err, smsmodels.MessageNotExistError) || errors.Is(err, smsmodels.EmptyQueueError) {
+			return nil
+		}
+		pkgLog.Error(err, "failed to enqueue sms")
 
 		if errors.Is(err, smsmodels.InvalidQueueError) {
 			return err
-		}
-
-		if errors.Is(err, smsmodels.MessageNotExistError) {
-			return nil
 		}
 
 		return nil
 	}
 
 	if msg.Status == smsmodels.StatusFailed {
-		if _, err := s.user.IncreaseUserBalance(ctx, msg.UserId, int64(msg.Cost)); err != nil {
-			logPkg.Error(err, "Failed to increase user balance")
+		if _, err := s.user.IncreaseUserBalance(newCtx, msg.UserId, int64(msg.Cost)); err != nil {
+			pkgLog.Error(err, "failed to increase user balance")
 		}
 	}
 
 	return nil
 }
 
-func (s *SmsGateway) StartSendWorkers(ctx context.Context) <-chan error {
-	logPkg.Debug("Starting send workers...")
-	errCh := make(chan error, s.cfg.SendWorkerCount)
-	for range s.cfg.SendWorkerCount {
-		go func() {
-			var stopErr error
-			for {
-				stopErr = ctx.Err()
-				if stopErr != nil {
-					logPkg.Error(stopErr, "Context error")
-					break
-				}
+func (s *SmsGateway) StartSendWorkers(ctx context.Context) error {
+	pkgLog.Debug("starting send worker...")
+	var stopErr error
+	for {
+		stopErr = ctx.Err()
+		if stopErr != nil {
+			pkgLog.Error(stopErr, "send worker context canceled")
+			break
+		}
 
-				stopErr = s.SendWorker(ctx)
-				if stopErr != nil {
-					break
-				}
-			}
-
-			logPkg.Error(stopErr, "Send worker is shutting down")
-			if errCh != nil {
-				errCh <- stopErr
-			}
-		}()
+		stopErr = s.SendWorker(ctx)
+		if stopErr != nil {
+			break
+		}
 	}
 
-	return errCh
+	pkgLog.Error(stopErr, "send worker shutdown successfully")
+	return stopErr
 }
 
 func (s *SmsGateway) CreateUser(ctx context.Context, user usermodels.User) (usermodels.User, error) {
-	res, err := s.user.CreateUser(ctx, user)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "create user context canceled")
+		return usermodels.User{}, err
+	}
+
+	newCtx := context.Background()
+	res, err := s.user.CreateUser(newCtx, user)
 	if err != nil {
-		logPkg.Error(err, "Failed to create user")
+		pkgLog.Error(err, "failed to create user")
 		return usermodels.User{}, err
 	}
 
@@ -158,9 +158,15 @@ func (s *SmsGateway) CreateUser(ctx context.Context, user usermodels.User) (user
 }
 
 func (s *SmsGateway) GetUser(ctx context.Context, userId string) (usermodels.User, error) {
-	res, err := s.user.GetUser(ctx, userId)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "get user context canceled")
+		return usermodels.User{}, err
+	}
+
+	newCtx := context.Background()
+	res, err := s.user.GetUser(newCtx, userId)
 	if err != nil {
-		logPkg.Error(err, "Failed to get user")
+		pkgLog.Error(err, "failed to get user")
 		return usermodels.User{}, err
 	}
 
@@ -168,9 +174,15 @@ func (s *SmsGateway) GetUser(ctx context.Context, userId string) (usermodels.Use
 }
 
 func (s *SmsGateway) GetUserMessages(ctx context.Context, userId string, skip int, limit int, desc bool) ([]smsmodels.Sms, error) {
-	userMsgs, err := s.sms.GetUserSms(ctx, userId, skip, limit, desc)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "get user context canceled")
+		return nil, err
+	}
+
+	newCtx := context.Background()
+	userMsgs, err := s.sms.GetUserSms(newCtx, userId, skip, limit, desc)
 	if err != nil {
-		logPkg.Error(err, "Failed to get user messages")
+		pkgLog.Error(err, "failed to get user messages")
 		return nil, err
 	}
 
@@ -178,7 +190,13 @@ func (s *SmsGateway) GetUserMessages(ctx context.Context, userId string, skip in
 }
 
 func (s *SmsGateway) SendSingleMessage(ctx context.Context, userId string, sms smsmodels.Sms) error {
-	user, getUserErr := s.GetUser(ctx, userId)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "send single message context canceled")
+		return err
+	}
+
+	newCtx := context.Background()
+	user, getUserErr := s.GetUser(newCtx, userId)
 	if getUserErr != nil {
 		return getUserErr
 	}
@@ -194,16 +212,16 @@ func (s *SmsGateway) SendSingleMessage(ctx context.Context, userId string, sms s
 		Receiver: sms.Receiver,
 		Cost:     s.cfg.MessageCost,
 	}
-	if _, decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
-		logPkg.Error(decreaseErr, "Failed to decrease user balance")
+	if _, decreaseErr := s.user.DecreaseUserBalance(newCtx, userId, totalCost); decreaseErr != nil {
+		pkgLog.Error(decreaseErr, "failed to decrease user balance")
 		return decreaseErr
 	}
 
-	if scheduleErr := s.sms.ScheduleSms(ctx, userId, []smsmodels.Sms{msg}); scheduleErr != nil {
-		logPkg.Error(scheduleErr, "Failed to schedule sms")
+	if scheduleErr := s.sms.ScheduleSms(newCtx, userId, []smsmodels.Sms{msg}); scheduleErr != nil {
+		pkgLog.Error(scheduleErr, "failed to schedule sms")
 
-		if _, increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
-			logPkg.Error(increaseErr, "Failed to increase user balance")
+		if _, increaseErr := s.user.IncreaseUserBalance(newCtx, userId, totalCost); increaseErr != nil {
+			pkgLog.Error(increaseErr, "failed to increase user balance")
 		}
 
 		return scheduleErr
@@ -213,7 +231,13 @@ func (s *SmsGateway) SendSingleMessage(ctx context.Context, userId string, sms s
 }
 
 func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []smsmodels.Sms) error {
-	user, getUserErr := s.GetUser(ctx, userId)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "send bulk message context canceled")
+		return err
+	}
+
+	newCtx := context.Background()
+	user, getUserErr := s.GetUser(newCtx, userId)
 	if getUserErr != nil {
 		return getUserErr
 	}
@@ -232,16 +256,16 @@ func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []s
 			Cost:     s.cfg.MessageCost,
 		}
 	}
-	if _, decreaseErr := s.user.DecreaseUserBalance(ctx, userId, totalCost); decreaseErr != nil {
-		logPkg.Error(decreaseErr, "Failed to decrease user balance")
+	if _, decreaseErr := s.user.DecreaseUserBalance(newCtx, userId, totalCost); decreaseErr != nil {
+		pkgLog.Error(decreaseErr, "failed to decrease user balance")
 		return decreaseErr
 	}
 
-	if scheduleErr := s.sms.ScheduleSms(ctx, userId, msgs); scheduleErr != nil {
-		logPkg.Error(scheduleErr, "Failed to schedule sms")
+	if scheduleErr := s.sms.ScheduleSms(newCtx, userId, msgs); scheduleErr != nil {
+		pkgLog.Error(scheduleErr, "failed to schedule sms")
 
-		if _, increaseErr := s.user.IncreaseUserBalance(ctx, userId, totalCost); increaseErr != nil {
-			logPkg.Error(increaseErr, "Failed to increase user balance")
+		if _, increaseErr := s.user.IncreaseUserBalance(newCtx, userId, totalCost); increaseErr != nil {
+			pkgLog.Error(increaseErr, "failed to increase user balance")
 		}
 
 		return scheduleErr
@@ -251,9 +275,15 @@ func (s *SmsGateway) SendBulkMessage(ctx context.Context, userId string, sms []s
 }
 
 func (s *SmsGateway) IncreaseUserBalance(ctx context.Context, userId string, amount int64) (int64, error) {
-	newBalance, err := s.user.IncreaseUserBalance(ctx, userId, amount)
+	if err := ctx.Err(); err != nil {
+		pkgLog.Error(err, "increase user context canceled")
+		return 0, err
+	}
+
+	newCtx := context.Background()
+	newBalance, err := s.user.IncreaseUserBalance(newCtx, userId, amount)
 	if err != nil {
-		logPkg.Error(err, "Failed to increase user balance")
+		pkgLog.Error(err, "failed to increase user balance")
 		return 0, err
 	}
 

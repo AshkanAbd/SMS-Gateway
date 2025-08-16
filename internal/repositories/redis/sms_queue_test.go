@@ -258,7 +258,7 @@ func TestRepository_Pop(t *testing.T) {
 		assert.Equal(t, models.InvalidQueueError, actualErr)
 	})
 
-	t.Run("should block until message is available when list is empty", func(t *testing.T) {
+	t.Run("should return EmptyQueueError when list is empty", func(t *testing.T) {
 		conn, repo, err := initRedis()
 		assert.NoError(t, err)
 
@@ -269,27 +269,9 @@ func TestRepository_Pop(t *testing.T) {
 
 		ctx := context.Background()
 
-		expectedMsg := models.Sms{
-			UserId:   "1",
-			Content:  "Test Content 1",
-			Receiver: "09123456789",
-			Cost:     100,
-			Status:   models.StatusEnqueued,
-		}
-
-		before := time.Now()
-		go func() {
-			time.Sleep(1 * time.Second)
-			err = conn.GetClient(queueDB).LPush(ctx, queueName, common.ValueToJSON(&expectedMsg)).Err()
-			assert.NoError(t, err)
-		}()
 		actualMsg, actualErr := repo.Pop(ctx)
-		assert.GreaterOrEqual(t, time.Now().Sub(before), 500*time.Millisecond)
-		assert.NoError(t, actualErr)
-		assert.Equal(t, expectedMsg.UserId, actualMsg.UserId)
-		assert.Equal(t, expectedMsg.Content, actualMsg.Content)
-		assert.Equal(t, expectedMsg.Receiver, actualMsg.Receiver)
-		assert.Equal(t, expectedMsg.Cost, actualMsg.Cost)
-		assert.Equal(t, expectedMsg.Status, actualMsg.Status)
+		assert.Error(t, actualErr)
+		assert.Equal(t, models.EmptyQueueError, actualErr)
+		assert.Equal(t, models.Sms{}, actualMsg)
 	})
 }

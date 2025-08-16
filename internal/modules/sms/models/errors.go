@@ -9,4 +9,5 @@ var (
 	NoCapacityInQueueError = errors.New("queue capacity is zero")
 	SendError              = errors.New("failed to send message")
 	MessageNotExistError   = errors.New("message does not exist")
+	EmptyQueueError        = errors.New("queue is empty")
 )

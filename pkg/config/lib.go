@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	logPkg "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
+	pkgLog "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
 )
 
 func Load[T any]() *T {
@@ -20,15 +20,15 @@ func Load[T any]() *T {
 	t := new(T)
 
 	if err := viper.ReadInConfig(); err != nil {
-		logPkg.Fatal(err, "failed to read config")
+		pkgLog.Fatal(err, "failed to read config")
 	} else {
-		logPkg.Debug("config file loaded successfully")
+		pkgLog.Debug("config file loaded successfully")
 	}
 
 	if err := viper.Unmarshal(&t); err != nil {
-		logPkg.Fatal(err, "failed to unmarshal config")
+		pkgLog.Fatal(err, "failed to unmarshal config")
 	} else {
-		logPkg.Debug("config file unmarshalled successfully")
+		pkgLog.Debug("config file unmarshalled successfully")
 	}
 
 	return t

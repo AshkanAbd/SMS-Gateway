@@ -18,9 +18,8 @@ import (
 
 func TestSmsGateway_CreateUser(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    0,
-		SendWorkerCount: 0,
-		MessageCost:     0,
+		EnqueueCount: 0,
+		MessageCost:  0,
 	}
 
 	t.Run("should create new user", func(t *testing.T) {
@@ -73,9 +72,8 @@ func TestSmsGateway_CreateUser(t *testing.T) {
 
 func TestSmsGateway_GetUser(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    0,
-		SendWorkerCount: 0,
-		MessageCost:     0,
+		EnqueueCount: 0,
+		MessageCost:  0,
 	}
 
 	t.Run("should return user", func(t *testing.T) {
@@ -130,9 +128,8 @@ func TestSmsGateway_GetUser(t *testing.T) {
 
 func TestSmsGateway_GetUserMessages(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    0,
-		SendWorkerCount: 0,
-		MessageCost:     0,
+		EnqueueCount: 0,
+		MessageCost:  0,
 	}
 
 	t.Run("should return user messages", func(t *testing.T) {
@@ -213,9 +210,8 @@ func TestSmsGateway_GetUserMessages(t *testing.T) {
 
 func TestSmsGateway_SendSingleMessage(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    0,
-		SendWorkerCount: 0,
-		MessageCost:     100,
+		EnqueueCount: 0,
+		MessageCost:  100,
 	}
 
 	t.Run("should schedule message", func(t *testing.T) {
@@ -386,9 +382,8 @@ func TestSmsGateway_SendSingleMessage(t *testing.T) {
 
 func TestSmsGateway_SendBulkMessage(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    0,
-		SendWorkerCount: 0,
-		MessageCost:     100,
+		EnqueueCount: 0,
+		MessageCost:  100,
 	}
 
 	t.Run("should schedule message", func(t *testing.T) {
@@ -587,9 +582,8 @@ func TestSmsGateway_SendBulkMessage(t *testing.T) {
 
 func TestSmsGateway_EnqueueWorker(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    10,
-		SendWorkerCount: 1,
-		MessageCost:     100,
+		EnqueueCount: 10,
+		MessageCost:  100,
 	}
 
 	t.Run("should enqueue scheduled messages", func(t *testing.T) {
@@ -671,9 +665,8 @@ func TestSmsGateway_EnqueueWorker(t *testing.T) {
 
 func TestSmsGateway_SendWorker(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    10,
-		SendWorkerCount: 1,
-		MessageCost:     100,
+		EnqueueCount: 10,
+		MessageCost:  100,
 	}
 
 	t.Run("should send a queue message", func(t *testing.T) {
@@ -798,9 +791,8 @@ func TestSmsGateway_SendWorker(t *testing.T) {
 
 func TestSmsGateway_IncreaseUserBalance(t *testing.T) {
 	cfg := smsgateway.Config{
-		EnqueueCount:    10,
-		SendWorkerCount: 1,
-		MessageCost:     100,
+		EnqueueCount: 10,
+		MessageCost:  100,
 	}
 
 	t.Run("should increase user balance", func(t *testing.T) {

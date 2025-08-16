@@ -18,4 +18,5 @@ type AppConfig struct {
 	RedisRepoConfig  redis.Config              `mapstructure:"redis_repo"`
 	SmsGatewayConfig smsgateway.Config         `mapstructure:"sms_gateway"`
 	LogLevel         string                    `mapstructure:"log_level"`
+	SendWorkerCount  int                       `mapstructure:"send_worker_count"`
 }

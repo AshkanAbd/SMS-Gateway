@@ -45,24 +45,22 @@ func (r *Repository) GetLength(ctx context.Context) (int, error) {
 }
 
 func (r *Repository) Pop(ctx context.Context) (models.Sms, error) {
-	for {
-		res, err := r.queueClient.BRPop(ctx, r.cfg.QueueTimeout, r.cfg.QueueName).Result()
-		if err != nil {
-			if errors.Is(err, redis.Nil) {
-				continue
-			}
-			if err.Error() == wrongTypeError {
-				return models.Sms{}, models.InvalidQueueError
-			}
-
-			return models.Sms{}, err
+	res, err := r.queueClient.BRPop(ctx, r.cfg.QueueTimeout, r.cfg.QueueName).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return models.Sms{}, models.EmptyQueueError
+		}
+		if err.Error() == wrongTypeError {
+			return models.Sms{}, models.InvalidQueueError
 		}
 
-		s := models.Sms{}
-		if err := common.JSONToValue[models.Sms](res[1], &s); err != nil {
-			return models.Sms{}, err
-		}
-
-		return s, nil
+		return models.Sms{}, err
 	}
+
+	s := models.Sms{}
+	if err := common.JSONToValue[models.Sms](res[1], &s); err != nil {
+		return models.Sms{}, err
+	}
+
+	return s, nil
 }
