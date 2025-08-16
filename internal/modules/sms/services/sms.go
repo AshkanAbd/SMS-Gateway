@@ -5,6 +5,8 @@ import (
 
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/models"
 	"github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/sms/repositories"
+
+	pkgMetrics "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/metrics"
 )
 
 type SmsServiceConfig struct {
@@ -50,6 +52,7 @@ func (s *SmsService) ScheduleSms(ctx context.Context, userId string, msgs []mode
 	if err := s.smsRepo.CreateScheduleMessages(ctx, msgs); err != nil {
 		return err
 	}
+	pkgMetrics.SmsStatusMetric.WithLabelValues("scheduled").Add(float64(len(msgs)))
 
 	return nil
 }
@@ -80,6 +83,7 @@ func (s *SmsService) EnqueueEarliest(ctx context.Context, count int) (int, error
 	if len(enqueuedMsgs) == 0 {
 		return 0, nil
 	}
+	pkgMetrics.SmsStatusMetric.WithLabelValues("enqueued").Add(float64(len(enqueuedMsgs)))
 
 	if err := s.smsQueue.Enqueue(ctx, enqueuedMsgs); err != nil {
 		ids := make([]string, len(enqueuedMsgs))
@@ -102,6 +106,8 @@ func (s *SmsService) SetMessageAsFailed(ctx context.Context, id string) (models.
 		return models.Sms{}, err
 	}
 
+	pkgMetrics.SmsStatusMetric.WithLabelValues("failed").Inc()
+
 	return res, nil
 }
 
@@ -110,6 +116,8 @@ func (s *SmsService) SetMessageAsSent(ctx context.Context, id string) (models.Sm
 	if err != nil {
 		return models.Sms{}, err
 	}
+
+	pkgMetrics.SmsStatusMetric.WithLabelValues("sent").Inc()
 
 	return res, nil
 }

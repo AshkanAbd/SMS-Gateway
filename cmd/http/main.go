@@ -23,6 +23,7 @@ import (
 	usersrv "github.com/AshkanAbd/arvancloud_sms_gateway/internal/modules/user/services"
 	pkgCfg "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/config"
 	pkgLog "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/logger"
+	pkgMetrics "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/metrics"
 	pkgPgSql "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/pgsql"
 	pkgRedis "github.com/AshkanAbd/arvancloud_sms_gateway/pkg/redis"
 )
@@ -81,6 +82,8 @@ func main() {
 
 	gateway := smsgateway.NewSmsGateway(Config.SmsGatewayConfig, userService, smsService)
 
+	pkgMetrics.RegisterMetrics()
+
 	httpHandler := handlers.NewHttpHandler(gateway)
 
 	app := fiber.New(fiber.Config{
@@ -107,6 +110,8 @@ func main() {
 		sendWorkerErrCh,
 		httpErrCh,
 	}))
+
+	app.Get("/metrics", handlers.Metrics())
 
 	go func() {
 		pkgLog.Debug("Starting http server on %s", Config.HttpConfig.Address)
